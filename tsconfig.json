@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "noImplicitAny": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "sourceMap": true
+  },
+  "include": ["src/*", "src/frontend/ast.ts", "src/utils/transcriber.ts"],
+  "exclude": ["node_modules"]
+}

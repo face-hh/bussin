@@ -1,0 +1,27 @@
+{
+
+  "scripts": {
+    "bussin": "npx ts-node src/main.ts"
+  },
+  "devDependencies": {
+
+    "@types/node": "^20.8.10",
+
+    "typescript": "^5.2.2"
+
+  },
+
+  "dependencies": {
+
+    "axios": "^1.6.1",
+
+    "geoip-lite": "^1.4.8",
+
+    "ip2location-nodejs": "^9.6.0",
+
+    "js-user-country": "^1.0.1"
+
+  }
+
+}
+

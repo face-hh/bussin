@@ -1,0 +1,53 @@
+let x = "Hello, World!";
+println(x)
+
+let y = 1;
+println(y)
+
+if (y == 1){
+    println("Y is 1")
+} else if (n != 2){
+    println("Y is NOT 2")
+} else if (y == 3 | y == 1){
+    println("Y is 1 or 3")
+} else if (y == 3 && y == 1){
+    println("Y is 1 and 3. how's that possible hello??")
+} else {
+    println("no if statement matched")
+}
+
+let z = {
+    x, y
+}
+println(z)
+
+
+fn printAll(){
+    println({x, y, z})
+}
+
+printAll()
+
+println(printAll())
+println(time)
+
+for(let i = 0; i < 10; i = i + 1){
+    println(strcon("Currently at ", i))
+}
+
+println(format("Hello, ${}", "Again"))
+println(math.random())
+
+try {
+    println(haha)
+} catch {
+    println(error)
+}
+
+try {
+    const res = exec("ls");
+
+    println(res)
+} catch {
+    println(error, "User is running Windows/Macos")
+}

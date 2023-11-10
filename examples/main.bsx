@@ -1,0 +1,64 @@
+mf x be "Hello, World!" rn
+waffle(x)
+
+lit y be 1 rn
+waffle(y)
+
+lit a be cap rn
+waffle(y)
+
+sus (y fr 1){
+    waffle("Y is 1")
+} impostor sus (n nah 2){
+    waffle("Y is NOT 2")
+} impostor sus (y fr 3 carenot y fr 1){
+    waffle("Y is 1 or 3")
+} impostor sus (y fr 3 btw y fr 1){
+    waffle("Y is 1 and 3. how's that possible hello??")
+} impostor {
+    waffle("no if statement matched")
+}
+
+lit z = {
+    x, y
+} rn
+
+waffle(z)
+
+
+bruh printAll(){
+    waffle({x, y, z})
+}
+
+printAll()
+
+waffle(printAll())
+waffle(time)
+
+yall(lit i be 0 rn i smol 10 rn i be i + 1){
+    waffle(strcon("Currently at ", i))
+}
+
+waffle(format("Hello, ${}", "Again"))
+waffle(format("Hello, L{}", "Again"))
+waffle(format("Hello, ${}", "Again"))
+
+lit: number a be cap rn
+waffle(y)
+waffle: object(y: number)
+
+waffle(nerd.random(), nerd.pi)
+
+fuck_around {
+    waffle(haha)
+} find_out {
+    waffle(error)
+}
+
+fuck_around {
+    mf res be clapback("ls") rn
+
+    waffle(res)
+} find_out {
+    waffle(error, "Blud running on windows 💀")
+}
