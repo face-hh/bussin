@@ -19,7 +19,7 @@ Mutable variables are created with:
 ```rs
 lit x be 0 rn
 ```
-You can also created a constant variable:
+You can also creat a constant variable:
 ```rs
 mf x be 0 rn
 ```
