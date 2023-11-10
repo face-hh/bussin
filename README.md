@@ -38,14 +38,14 @@ lit y be strcon("Hello, ", x) rn
 ```
 Or you can format your string to include variables:
 ```rs
-waffle(format("Hello, ${}", "World")
+waffle(format("Hello, ${}", "World"))
 ```
 However, you must use your regional currency symbol.
 ```rs
-format("Hello, ${}", "World")
-format("Hello, €{}", "World")
-format("Hello, £{}", "World")
-format("Hello, ¥{}", "World")
+waffle(format("Hello, ${}", "World"))
+waffle(format("Hello, €{}", "World"))
+waffle(format("Hello, £{}", "World"))
+waffle(format("Hello, ¥{}", "World"))
 ```
 
 ### Numbers
