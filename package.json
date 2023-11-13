@@ -1,7 +1,9 @@
 {
 
   "scripts": {
-    "bussin": "npx ts-node src/main.ts"
+    "bussin": "npx ts-node src/main.ts",
+    "bussin-bun": "bun src/main.ts",
+    "bussin-deno": "deno src/main.ts"
   },
   "devDependencies": {
 
