@@ -12270,7 +12270,7 @@ var require_geoip = __commonJS((exports, module) => {
   var fsWatcher = require_fsWatcher();
   var async = require_async2();
   var watcherName = "dataWatcher";
-  var geodatadir = path.resolve(__dirname, global.geodatadir || process.env.GEODATADIR || "../data/");
+  var geodatadir = path.resolve(__dirname, global.geodatadir || process.env.GEODATADIR || "./data/");
   var dataFiles = {
     city: path.join(geodatadir, "geoip-city.dat"),
     city6: path.join(geodatadir, "geoip-city6.dat"),
