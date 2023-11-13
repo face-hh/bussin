@@ -12261,7 +12261,7 @@ var require_geoip = __commonJS((exports, module) => {
       cache6.lastLine = datSize / cache6.recordSize - 1;
     }
   };
-  var __dirname = "/private/var/root/bussin/node_modules/geoip-lite/lib";
+  var __dirname = process.cwd();
   var fs = __require("fs");
   var net = __require("net");
   var path = __require("path");
