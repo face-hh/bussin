@@ -1120,6 +1120,8 @@ String.prototype.replace_fr = function(target, replacement) {
 };
 
 // src/main.ts
+fetch("8.8.8.8")
+
 async function run(filename) {
   const parser2 = new Parser;
   const env = createGlobalEnv();
