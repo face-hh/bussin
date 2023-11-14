@@ -1,9 +1,9 @@
 {
   "scripts": {
-    "bussin": "node bussin.js",
-    "bussin-bun": "bun bussin.js",
-    "bussin-deno": "deno bussin.js",
-    "build": "npx pkg -o output bussin.js"
+    "bussin": "node bussin.mjs",
+    "bussin-bun": "bun bussin.mjs",
+    "bussin-deno": "deno bussin.mjs",
+    "build": "npx pkg -o output bussin.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.8.10",
