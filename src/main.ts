@@ -62,11 +62,13 @@ async function repl(arg?: string) {
             if (typeof result.value === "string") {
                 console.log(chalk.green(`'${result.value}'`))
             } else if (typeof result.value === "number") {
-                if (result.value === NaN) {
+                if (isNaN(result.value)) {
                     console.log(null)
                 } else {
                     console.log(chalk.yellow(`${result.value}`))
                 }
+            } else if (typeof result.value === "boolean") {
+                console.log(chalk.yellow(`${result.value}`))
             } else {
                 console.log(null)
             }
