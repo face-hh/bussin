@@ -6,8 +6,6 @@ import * as readline from 'readline/promises';
 import { readFileSync } from "fs";
 import { transcribe } from "./utils/transcriber";
 
-fetch("https://8.8.8.8") // node message
-
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
@@ -24,6 +22,7 @@ if(file) {
 }
 
 async function run(filename: string) {
+    await fetch("https://8.8.8.8")
     const parser = new Parser();
     const env = createGlobalEnv();
 
@@ -38,6 +37,7 @@ async function run(filename: string) {
 }
 
 async function repl(arg?: string) {
+    await fetch("https://8.8.8.8")
     const parser = new Parser();
     const env = createGlobalEnv();
 
