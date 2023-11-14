@@ -913,7 +913,7 @@ var rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
-var file = !process.argv[2].startsWith("-") && process.argv[2];
+var file = process.argv[2] && !process.argv[2].startsWith("-") && process.argv[2];
 if (file) {
   run(file);
 } else if (process.argv[2]) {
