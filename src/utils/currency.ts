@@ -1,7 +1,6 @@
 import getSymbolFromCurrency from 'currency-symbol-map'
-import axios from 'axios';
 
 export default async function getLocalCurrency(): string {
-  const cSymbol = await axios.get("https://ipapi.co/currency/")
+  const cSymbol = await (await fetch("https://ipapi.co/currency/")).text()
   return getSymbolFromCurrency(cSymbol)
 }
