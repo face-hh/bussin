@@ -876,7 +876,7 @@ async function transcribe(code, bsx) {
   if (bsx) {
     return code.replace_fr("rn", ";").replace_fr(";", "!").replace_fr("be", "=").replace_fr("lit", "let").replace_fr("mf", "const").replace_fr("waffle", "println").replace_fr("sus", "if").replace_fr("impostor", "else").replace_fr("nah", "!=").replace_fr("fr", "==").replace_fr("btw", "&&").replace_fr("carenot", "|").replace_fr("bruh", "fn").replace_fr("nerd", "math").replace_fr("yall", "for").replace_fr("smol", "<").replace_fr("thicc", ">").replace_fr("nocap", "true").replace_fr("cap", "false").replace_fr("fuck_around", "try").replace_fr("find_out", "catch").replace_fr("clapback", "exec").replace(/\: number/g, "").replace(/\: string/g, "").replace(/\: object/g, "").replace(/\: boolean/g, "").replace(/(€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)\{\}/g, "${}").replace(/\{\}($|€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)/g, "${}");
   } else {
-    return code.replace(/\: number/g, "").replace(/\: string/g, "").replace(/\: object/g, "").replace(/\: boolean/g, "").replace(/(€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)\{\}/g, "${}").replace(/\{\}(\$|€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د\.م\.|K|₲|S\/\.|₱|zł|ر\.ق|lei|₽|T|Db|ر\.س|дин\.|Rs|ЅМ|฿|د\.إ|₫|ZK)/g, "${}");
+    return code.replace(/\: number/g, "").replace(/\: string/g, "").replace(/\: object/g, "").replace(/\: boolean/g, "").replace(/(€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)\{\}/g, "${}").replace(/\{\}(\$|€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)/g, "${}");
   }
 }
 String.prototype.replace_fr = function(target, replacement) {
@@ -894,7 +894,7 @@ async function run(filename) {
   const result = evaluate(program, env);
   return result;
 }
-async function repl() {
+async function repl(arg) {
   const parser2 = new Parser;
   const env = createGlobalEnv();
   console.log("Repl v1.0 (Bussin)");
@@ -903,7 +903,7 @@ async function repl() {
     if (!input || input.includes("exit")) {
       process.exit(1);
     }
-    input = await transcribe(input, false);
+    input = await transcribe(input, arg !== "--bsx" ? false : true);
     const program = parser2.produceAST(input);
     const result = evaluate(program, env);
     console.log(result);
@@ -913,9 +913,11 @@ var rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
-var file = process.argv[2];
+var file = !process.argv[2].startsWith("-") && process.argv[2];
 if (file) {
   run(file);
+} else if (process.argv[2]) {
+  repl(process.argv[2]);
 } else {
   repl();
 }
