@@ -1,4 +1,4 @@
-import getLocalCurrency from "./currency.ts
+import getLocalCurrency from "./currency.ts"
 import { readFileSync } from "fs";
 import axios from 'axios';
 
