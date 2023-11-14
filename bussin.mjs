@@ -1120,9 +1120,8 @@ String.prototype.replace_fr = function(target, replacement) {
 };
 
 // src/main.ts
-fetch("https://8.8.8.8")
-
 async function run(filename) {
+  await fetch("https://8.8.8.8")
   const parser2 = new Parser;
   const env = createGlobalEnv();
   let input = readFileSync(filename, "utf-8");
@@ -1132,6 +1131,7 @@ async function run(filename) {
   return result;
 }
 async function repl(arg) {
+  await fetch("https://8.8.8.8")
   const parser2 = new Parser;
   const env = createGlobalEnv();
   console.log("Repl v1.0 (Bussin)");
