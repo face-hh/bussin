@@ -44,7 +44,7 @@ export async function transcribe(code: string, bsx: boolean) {
             .replace(/\: object/g, '')
             .replace(/\: boolean/g, '')
             .replace(/(€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)\{\}/g, '${}')
-            .replace(/\{\}(€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)/g, '${}')
+            .replace(/\{\}($|€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)/g, '${}')
     } else {
         return code
             .replace(/\: number/g, '')
@@ -52,6 +52,6 @@ export async function transcribe(code: string, bsx: boolean) {
             .replace(/\: object/g, '')
             .replace(/\: boolean/g, '')
             .replace(/(€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)\{\}/g, '${}')
-            .replace(/\{\}(€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)/g, '${}')
+            .replace(/\{\}($|€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)/g, '${}')
     }
 }
