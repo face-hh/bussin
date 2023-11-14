@@ -1,6 +1,5 @@
 import { readFileSync } from "fs";
 import axios from 'axios';
-const geoip = require('geoip-lite');
 
 // fuck off typescript
 declare global {
@@ -9,42 +8,13 @@ declare global {
     }
 }
 
-interface Currency {
-    code: string;
-    currency: {
-        symbol: string,
-    };
-    language: {
-        code: string,
-    };
-}
-
 String.prototype.replace_fr = function (target: string, replacement: string): string {
     const pattern = new RegExp('(?<![\'"`])\\b' + target + '\\b(?!["\'`])', 'g');
     
     return this.replace(pattern, replacement);
 }
 
-const currencies = JSON.parse(readFileSync('./src/utils/currencies.json', 'utf-8'))
-
-async function get_currency() {
-    const { country } = await get_country();
-    const currency = currencies.find((el: Currency) => el.code === country)
-
-    return currency.currency.symbol;
-}
-
-async function get_country() {
-    const response = await axios.get('https://api64.ipify.org?format=json');
-    const ip = response.data.ip;
-    const geo = await geoip.lookup(ip);
-
-    return geo;
-}
-
 export async function transcribe(code: string) {
-    const currency = await get_currency();
-
     return code
         .replace_fr("rn", ';')
         .replace_fr(";", '!')
@@ -72,5 +42,4 @@ export async function transcribe(code: string) {
         .replace(/\: string/g, '')
         .replace(/\: object/g, '')
         .replace(/\: boolean/g, '')
-        .replace(new RegExp(`${currency}{}`), '${}')
-}
+        .replace(/(€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)\{\}/g, '${}')
