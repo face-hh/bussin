@@ -43,9 +43,9 @@ waffle(format("Hello, ${}", "Again"))
 waffle(format("Hello, L{}", "Again"))
 waffle(format("Hello, ${}", "Again"))
 
-lit: number a be cap rn
-waffle(y)
-waffle: object(y: number)
+lit: number xd be cap rn
+waffle(xd)
+waffle: object(xd: number)
 
 waffle(nerd.random(), nerd.pi)
 
