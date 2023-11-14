@@ -3,6 +3,7 @@ import { exec, execSync } from 'child_process';
 import { Identifier, MemberExpr } from '../frontend/ast';
 import { printValues } from './eval/native-fns';
 import { MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal } from "./values";
+import * as readline from 'readline/promises';
 
 export function createGlobalEnv(): Environment {
     const env = new Environment();
@@ -28,6 +29,14 @@ export function createGlobalEnv(): Environment {
         } catch (error) {
             throw error;
         }
+    }), true)
+
+    env.declareVar("input", MK_NATIVE_FN((data) => {
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        });
+        return MK_STRING(rl.question(data))
     }), true)
 
     env.declareVar("math", MK_OBJECT(
