@@ -872,8 +872,12 @@ import * as readline from "readline/promises";
 import {readFileSync} from "fs";
 
 // src/utils/transcriber.ts
-async function transcribe(code) {
-  return code.replace_fr("rn", ";").replace_fr(";", "!").replace_fr("be", "=").replace_fr("lit", "let").replace_fr("mf", "const").replace_fr("waffle", "println").replace_fr("sus", "if").replace_fr("impostor", "else").replace_fr("nah", "!=").replace_fr("fr", "==").replace_fr("btw", "&&").replace_fr("carenot", "|").replace_fr("bruh", "fn").replace_fr("nerd", "math").replace_fr("yall", "for").replace_fr("smol", "<").replace_fr("thicc", ">").replace_fr("nocap", "true").replace_fr("cap", "false").replace_fr("fuck_around", "try").replace_fr("find_out", "catch").replace_fr("clapback", "exec").replace(/\: number/g, "").replace(/\: string/g, "").replace(/\: object/g, "").replace(/\: boolean/g, "").replace(/(€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)\{\}/g, "${}").replace(/\{\}(€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)/g, "${}");
+async function transcribe(code, bsx) {
+  if (bsx) {
+    return code.replace_fr("rn", ";").replace_fr(";", "!").replace_fr("be", "=").replace_fr("lit", "let").replace_fr("mf", "const").replace_fr("waffle", "println").replace_fr("sus", "if").replace_fr("impostor", "else").replace_fr("nah", "!=").replace_fr("fr", "==").replace_fr("btw", "&&").replace_fr("carenot", "|").replace_fr("bruh", "fn").replace_fr("nerd", "math").replace_fr("yall", "for").replace_fr("smol", "<").replace_fr("thicc", ">").replace_fr("nocap", "true").replace_fr("cap", "false").replace_fr("fuck_around", "try").replace_fr("find_out", "catch").replace_fr("clapback", "exec").replace(/\: number/g, "").replace(/\: string/g, "").replace(/\: object/g, "").replace(/\: boolean/g, "").replace(/(€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)\{\}/g, "${}").replace(/\{\}($|€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)/g, "${}");
+  } else {
+    return code.replace(/\: number/g, "").replace(/\: string/g, "").replace(/\: object/g, "").replace(/\: boolean/g, "").replace(/(€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)\{\}/g, "${}").replace(/\{\}(\$|€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د\.م\.|K|₲|S\/\.|₱|zł|ر\.ق|lei|₽|T|Db|ر\.س|дин\.|Rs|ЅМ|฿|د\.إ|₫|ZK)/g, "${}");
+  }
 }
 String.prototype.replace_fr = function(target, replacement) {
   const pattern = new RegExp('(?<![\'"`])\\b' + target + '\\b(?!["\'`])', "g");
@@ -885,8 +889,7 @@ async function run(filename) {
   const parser2 = new Parser;
   const env = createGlobalEnv();
   let input = readFileSync(filename, "utf-8");
-  if (filename.endsWith(".bsx"))
-    input = await transcribe(input);
+  filename.endsWith(".bsx") ? input = await transcribe(input, true) : input = await transcribe(input, false);
   const program = parser2.produceAST(input);
   const result = evaluate(program, env);
   return result;
@@ -896,10 +899,11 @@ async function repl() {
   const env = createGlobalEnv();
   console.log("Repl v1.0 (Bussin)");
   while (true) {
-    const input = await rl.question("> ");
+    let input = await rl.question("> ");
     if (!input || input.includes("exit")) {
       process.exit(1);
     }
+    input = await transcribe(input, false);
     const program = parser2.produceAST(input);
     const result = evaluate(program, env);
     console.log(result);
