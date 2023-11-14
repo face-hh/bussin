@@ -47,7 +47,7 @@ lit: number xd be cap rn
 waffle(xd)
 waffle: object(xd: number)
 
-waffle(nerd.random(), nerd.pi)
+waffle(nerd.random(1,99), nerd.pi)
 
 fuck_around {
     waffle(haha)
