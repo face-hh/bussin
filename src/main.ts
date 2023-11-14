@@ -11,7 +11,7 @@ const rl = readline.createInterface({
     output: process.stdout
 });
 
-const file = !process.argv[2].startsWith("-") && process.argv[2];
+const file = process.argv[2] && !process.argv[2].startsWith("-") && process.argv[2];
 
 if(file) {
     run(file);
