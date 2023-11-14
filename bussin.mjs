@@ -1627,11 +1627,13 @@ async function repl(arg) {
       if (typeof result.value === "string") {
         console.log(source_default.green(`'${result.value}'`));
       } else if (typeof result.value === "number") {
-        if (result.value === NaN) {
+        if (isNaN(result.value)) {
           console.log(null);
         } else {
           console.log(source_default.yellow(`${result.value}`));
         }
+      } else if (typeof result.value === "boolean") {
+        console.log(source_default.yellow(`${result.value}`));
       } else {
         console.log(null);
       }
