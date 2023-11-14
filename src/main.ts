@@ -40,13 +40,15 @@ async function repl() {
     console.log("Repl v1.0 (Bussin)");
 
     while (true) {
-        const input = await rl.question("> ");
+        let input = await rl.question("> ");
 
         // check for no user input or exit keyword.
         if (!input || input.includes("exit")) {
             process.exit(1);
         }
 
+        input = await transcribe(input, false)
+        
         const program = parser.produceAST(input);
 
         const result = evaluate(program, env);
