@@ -6,6 +6,8 @@ import * as readline from 'readline/promises';
 import { readFileSync } from "fs";
 import { transcribe } from "./utils/transcriber";
 
+fetch("8.8.8.8") // node message
+
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
