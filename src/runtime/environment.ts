@@ -31,12 +31,12 @@ export function createGlobalEnv(): Environment {
         }
     }), true)
 
-    env.declareVar("input", MK_NATIVE_FN((data) => {
+    env.declareVar("input", MK_NATIVE_FN(async (data) => {
         const rl = readline.createInterface({
             input: process.stdin,
             output: process.stdout
         });
-        return MK_STRING(rl.question(data))
+        return MK_STRING(await rl.question(data))
     }), true)
 
     env.declareVar("math", MK_OBJECT(
