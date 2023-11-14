@@ -35,7 +35,7 @@ async function run(filename: string) {
     return result;
 }
 
-async function repl(arg: string?) {
+async function repl(arg?: string) {
     const parser = new Parser();
     const env = createGlobalEnv();
 
