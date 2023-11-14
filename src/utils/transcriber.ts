@@ -1,3 +1,4 @@
+import getLocalCurrency from "./currency.ts
 import { readFileSync } from "fs";
 import axios from 'axios';
 
@@ -15,6 +16,8 @@ String.prototype.replace_fr = function (target: string, replacement: string): st
 }
 
 export async function transcribe(code: string, bsx: boolean) {
+    const currency = await getLocalCurrency()
+
     if (bsx) {
         return code
             .replace_fr("rn", ';')
@@ -43,15 +46,15 @@ export async function transcribe(code: string, bsx: boolean) {
             .replace(/\: string/g, '')
             .replace(/\: object/g, '')
             .replace(/\: boolean/g, '')
-            .replace(/(€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)\{\}/g, '${}')
-            .replace(/\{\}($|€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)/g, '${}')
+            .replace(new RegExp(`${currency}{}`), '${}')
+            .replace(new RegExp(`{}${currency}`), '${}')
     } else {
         return code
             .replace(/\: number/g, '')
             .replace(/\: string/g, '')
             .replace(/\: object/g, '')
             .replace(/\: boolean/g, '')
-            .replace(/(€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)\{\}/g, '${}')
-            .replace(/\{\}(\$|€|£|¥|ƒ|лв|៛|₡|kn|Kč|kr|₵|Q|Ft|₹|﷼|₪|с|₭|ден|RM|UM|₨|₮|د.م.|Ks|C\$|₦|₩|ر.ع.|K|₲|S\/\.|₱|zł|ر.ق|lei|₽|T|Db|ر.س|дин\.|Rs|ЅМ|฿|د.إ|₫|ZK)/g, '${}')
+            .replace(new RegExp(`${currency}{}`), '${}')
+            .replace(new RegExp(`{}${currency}`), '${}')
     }
 }
