@@ -56,6 +56,20 @@ async function repl(arg?: string) {
         const program = parser.produceAST(input);
 
         const result = evaluate(program, env);
-        console.log(result);
+        if (result.constructor === Object) {
+            if (typeof result.value === "string") {
+                console.log(chalk.green(`'${result.value}'`))
+            } else if (typeof result.value === "number") {
+                if (result.value === NaN) {
+                    console.log(null)
+                } else {
+                    console.log(chalk.yellow(`${result.value}`))
+                }
+            } else {
+                console.log(null)
+            }
+        } else {
+            console.log(result);
+        }
     }
 }
