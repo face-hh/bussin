@@ -106,7 +106,7 @@ export function tokenize(sourceCode: string): Token[] {
         // BEGIN PARSING ONE CHARACTER TOKENS
         if (src[0] == "(") {
             tokens.push(token(src.shift(), TokenType.OpenParen));
-        else if (src[0] == "\\") {
+        } else if (src[0] == "\\") {
             tokens.push(token(src.shift(), TokenType.Backslash))
         } else if (src[0] == ")") {
             tokens.push(token(src.shift(), TokenType.CloseParen));
