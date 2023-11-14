@@ -40,7 +40,6 @@ export async function transcribe(code: string, bsx: boolean) {
             .replace_fr("fuck_around", 'try')
             .replace_fr("find_out", 'catch')
             .replace_fr("clapback", 'exec')
-            .replace_fr("result", "=")
             .replace_fr("minus", "-")
             .replace_fr("plus", "+")
             .replace_fr("times", "*")
