@@ -11,10 +11,12 @@ const rl = readline.createInterface({
     output: process.stdout
 });
 
-const file = process.argv[2];
+const file = !process.argv[2].startsWith("-") && process.argv[2];
 
 if(file) {
     run(file);
+} else if (process.argv[2]) {
+    repl(process.argv[2]);
 } else {
     repl();
 }
@@ -33,7 +35,7 @@ async function run(filename: string) {
     return result;
 }
 
-async function repl() {
+async function repl(arg: string?) {
     const parser = new Parser();
     const env = createGlobalEnv();
 
@@ -47,7 +49,7 @@ async function repl() {
             process.exit(1);
         }
 
-        input = await transcribe(input, false)
+        input = await transcribe(input, arg !== "--bsx" ? false : true)
         
         const program = parser.produceAST(input);
 
