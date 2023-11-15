@@ -62,22 +62,26 @@ async function repl(arg?: string) {
         const program = parser.produceAST(input);
 
         const result = evaluate(program, env);
-        if (result.constructor === Object) {
-            if (typeof (result as StringVal).value === "string") {
-                console.log(chalk.green(`'${(result as StringVal).value}'`))
-            } else if (typeof (result as NumberVal).value === "number") {
-                if (isNaN((result as NumberVal).value)) {
-                    console.log()
-                } else {
-                    console.log(chalk.yellow(`${(result as NumberVal).value}`))
-                }
-            } else if (typeof (result as BooleanVal).value === "boolean") {
-                console.log(chalk.yellow(`${(result as BooleanVal).value}`))
-            } else {
-                console.log()
-            }
+        if (!result) {
+            continue
         } else {
-            console.log();
+            if (result.constructor === Object) {
+                if (typeof (result as StringVal).value === "string") {
+                    console.log(chalk.green(`'${(result as StringVal).value}'`))
+                } else if (typeof (result as NumberVal).value === "number") {
+                    if (isNaN((result as NumberVal).value)) {
+                        console.log()
+                    } else {
+                        console.log(chalk.yellow(`${(result as NumberVal).value}`))
+                    }
+                } else if (typeof (result as BooleanVal).value === "boolean") {
+                    console.log(chalk.yellow(`${(result as BooleanVal).value}`))
+                } else {
+                    console.log()
+                }
+            } else {
+                console.log();
+            }
         }
     }
 }
