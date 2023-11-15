@@ -35,7 +35,9 @@ async function run(filename: string) {
 }
 
 async function repl(arg?: string) {
-    await fetch("https://8.8.8.8")
+    if (typeof globalThis.Deno === "undefined" && typeof globalThis.Bun === "undefined") {
+        await fetch("https://8.8.8.8")
+    }
     const parser = new Parser();
     const env = createGlobalEnv();
 
