@@ -23,13 +23,13 @@ export default class Parser {
     private expect(type: TokenType, err: any) {
         class BussinError {
             message;
-            constructor(message2) {
-            this.message = `${source_default.red("error")}: ${message2}`;
+            constructor(message: string) {
+            this.message = `${chalk.red("error")}: ${message}`;
             }
         }       
         const prev = this.tokens.shift() as Token;
         if (!prev || prev.type != type) {
-            console.log(new BussinError(`Parser error:\n`, err, prev, "Expecting: ", type));
+            console.log(new BussinError(`Parser error:\n${err}${prev} Expecting: ${type}`));
             return
         }
 
