@@ -750,374 +750,32 @@ function MK_OBJECT(obj) {
   return { type: "object", properties: obj };
 }
 
-// src/runtime/environment.ts
-function createGlobalEnv() {
-  const env = new Environment;
-  env.declareVar("true", MK_BOOL(true), true);
-  env.declareVar("false", MK_BOOL(false), true);
-  env.declareVar("null", MK_NULL(), true);
-  env.declareVar("error", MK_NULL(), false);
-  env.declareVar("println", MK_NATIVE_FN((args) => {
-    printValues(args);
-    return MK_NULL();
-  }), true);
-  env.declareVar("exec", MK_NATIVE_FN((args) => {
-    const cmd = args[0].value;
-    try {
-      const result = execSync(cmd, { encoding: "utf-8" });
-      return MK_STRING(result.trim());
-    } catch (error) {
-      throw error;
-    }
-  }), true);
-  env.declareVar("math", MK_OBJECT(new Map().set("pi", Math.PI).set("sqrt", MK_NATIVE_FN((args) => {
-    const arg = args[0].value;
-    return MK_NUMBER(Math.sqrt(arg));
-  })).set("random", MK_NATIVE_FN((args) => {
-    const arg1 = args[0].value;
-    const arg2 = args[1].value;
-    const min = Math.ceil(arg1);
-    const max = Math.floor(arg2);
-    return MK_NUMBER(Math.floor(Math.random() * (max - min + 1)) + min);
-  })).set("round", MK_NATIVE_FN((args) => {
-    const arg = args[0].value;
-    return MK_NUMBER(Math.round(arg));
-  })).set("ceil", MK_NATIVE_FN((args) => {
-    const arg = args[0].value;
-    return MK_NUMBER(Math.ceil(arg));
-  })).set("abs", MK_NATIVE_FN((args) => {
-    const arg = args[0].value;
-    return MK_NUMBER(Math.abs(arg));
-  }))), true);
-  env.declareVar("strcon", MK_NATIVE_FN((args, env2) => {
-    let res = "";
-    for (let i = 0;i < args.length; i++) {
-      const arg = args[i];
-      res += arg.value;
-    }
-    return MK_STRING(res);
-  }), true);
-  env.declareVar("format", MK_NATIVE_FN((args, env2) => {
-    const str = args.shift();
-    let res = "";
-    for (let i = 0;i < args.length; i++) {
-      const arg = args[i];
-      res = str.value.replace(/\${}/, arg.value);
-    }
-    if (!args[0])
-      throw "2nd parameter in format! missing.";
-    return MK_STRING(res);
-  }), true);
-  function timeFunction(args, env2) {
-    return MK_NUMBER(Date.now());
-  }
-  env.declareVar("time", MK_NATIVE_FN(timeFunction), true);
-  return env;
-}
-
-class Environment {
-  parent;
-  variables;
-  constants;
-  constructor(parentENV) {
-    const global = parentENV ? true : false;
-    this.parent = parentENV;
-    this.variables = new Map;
-    this.constants = new Set;
-  }
-  declareVar(varname, value, constant) {
-    if (this.variables.has(varname)) {
-      throw `Cannot declare variable ${varname}. As it already is defined.`;
-    }
-    this.variables.set(varname, value);
-    if (constant)
-      this.constants.add(varname);
-    return value;
-  }
-  assignVar(varname, value) {
-    const env = this.resolve(varname);
-    if (env.constants.has(varname)) {
-      throw `Cannot reassign to variable "${varname}" as it's constant.`;
-    }
-    env.variables.set(varname, value);
-    return value;
-  }
-  lookupOrMutObject(expr, value, property) {
-    if (expr.object.kind === "MemberExpr")
-      return this.lookupOrMutObject(expr.object, value, expr.property);
-    const varname = expr.object.symbol;
-    const env = this.resolve(varname);
-    let pastVal = env.variables.get(varname);
-    const prop = property ? property.symbol : expr.property.symbol;
-    const currentProp = expr.property.symbol;
-    if (currentProp)
-      pastVal = pastVal.properties.get(currentProp);
-    if (value)
-      pastVal.properties.set(prop, value);
-    return pastVal;
-  }
-  lookupVar(varname) {
-    const env = this.resolve(varname);
-    return env.variables.get(varname);
-  }
-  resolve(varname) {
-    if (this.variables.has(varname))
-      return this;
-    if (this.parent == undefined)
-      throw `Cannot resolve '${varname}' as it does not exist.`;
-    return this.parent.resolve(varname);
-  }
-}
-
-// src/runtime/eval/expressions.ts
-function eval_numeric_binary_expr(lhs, rhs, operator) {
-  if (operator === "!=") {
-    return equals(lhs, rhs, false);
-  } else if (operator === "==") {
-    return equals(lhs, rhs, true);
-  } else if (operator === "&&") {
-    return equals(lhs, rhs, true);
-  } else if (operator === "|") {
-    const llhs = lhs;
-    const rrhs = rhs;
-    return MK_BOOL(llhs.value || rrhs.value);
-  } else if (lhs.type === "number" && rhs.type === "number") {
-    const llhs = lhs;
-    const rrhs = rhs;
-    switch (operator) {
-      case "+":
-        return MK_NUMBER(llhs.value + rrhs.value);
-      case "-":
-        return MK_NUMBER(llhs.value - rrhs.value);
-      case "*":
-        return MK_NUMBER(llhs.value * rrhs.value);
-      case "/":
-        return MK_NUMBER(llhs.value / rrhs.value);
-      case "%":
-        return MK_NUMBER(llhs.value % rrhs.value);
-      case "<":
-        return MK_BOOL(llhs.value < rrhs.value);
-      case ">":
-        return MK_BOOL(llhs.value > rrhs.value);
-      default:
-        throw `Unknown operator provided in operation: ${lhs}, ${rhs}.`;
-    }
-  } else {
-    return MK_NULL();
-  }
-}
-var equals = function(lhs, rhs, strict) {
-  const compare = strict ? (a, b) => a === b : (a, b) => a !== b;
-  switch (lhs.type) {
-    case "boolean":
-      return MK_BOOL(compare(lhs.value, rhs.value));
-    case "number":
-      return MK_BOOL(compare(lhs.value, rhs.value));
-    case "string":
-      return MK_BOOL(compare(lhs.value, rhs.value));
-    case "fn":
-      return MK_BOOL(compare(lhs.body, rhs.body));
-    case "native-fn":
-      return MK_BOOL(compare(lhs.call, rhs.call));
-    case "null":
-      return MK_BOOL(compare(lhs.value, rhs.value));
-    case "object":
-      return MK_BOOL(compare(lhs.properties, rhs.properties));
-    default:
-      throw `Unhandled type in: ${lhs}, ${rhs}`;
-  }
-};
-function eval_binary_expr(binop, env) {
-  const lhs = evaluate(binop.left, env);
-  const rhs = evaluate(binop.right, env);
-  return eval_numeric_binary_expr(lhs, rhs, binop.operator);
-}
-function eval_identifier(ident, env) {
-  const val = env.lookupVar(ident.symbol);
-  return val;
-}
-function eval_assignment(node, env) {
-  if (node.assigne.kind === "MemberExpr")
-    return eval_member_expr(env, node);
-  if (node.assigne.kind !== "Identifier")
-    throw `Invalid left-hand-side expression: ${JSON.stringify(node.assigne)}.`;
-  const varname = node.assigne.symbol;
-  return env.assignVar(varname, evaluate(node.value, env));
-}
-function eval_object_expr(obj, env) {
-  const object = { type: "object", properties: new Map };
-  for (const { key, value } of obj.properties) {
-    const runtimeVal = value == undefined ? env.lookupVar(key) : evaluate(value, env);
-    object.properties.set(key, runtimeVal);
-  }
-  return object;
-}
-function eval_call_expr(expr, env) {
-  const args = expr.args.map((arg) => evaluate(arg, env));
-  const fn = evaluate(expr.caller, env);
-  if (fn.type == "native-fn") {
-    const result = fn.call(args, env);
-    return result;
-  }
-  if (fn.type == "fn") {
-    const func = fn;
-    const scope = new Environment(func.declarationEnv);
-    for (let i = 0;i < func.parameters.length; i++) {
-      const varname = func.parameters[i];
-      scope.declareVar(varname, args[i], false);
-    }
-    let result = MK_NULL();
-    for (const stmt of func.body) {
-      result = evaluate(stmt, scope);
-    }
-    return result;
-  }
-  throw "Cannot call value that is not a function: " + JSON.stringify(fn);
-}
-function eval_member_expr(env, node, expr) {
-  if (expr) {
-    const variable = env.lookupOrMutObject(expr);
-    return variable;
-  } else if (node) {
-    const variable = env.lookupOrMutObject(node.assigne, evaluate(node.value, env));
-    return variable;
-  } else {
-    throw `Evaluating a member expression is not possible without a member or assignment expression.`;
-  }
-}
-
-// src/runtime/eval/statements.ts
-function eval_program(program, env) {
-  let lastEvaluated = MK_NULL();
-  for (const statement of program.body) {
-    lastEvaluated = evaluate(statement, env);
-  }
-  return lastEvaluated;
-}
-function eval_val_declaration(declaration, env) {
-  const value = declaration.value ? evaluate(declaration.value, env) : MK_NULL();
-  return env.declareVar(declaration.identifier, value, declaration.constant);
-}
-function eval_function_declaration(declaration, env) {
-  const fn = {
-    type: "fn",
-    name: declaration.name,
-    parameters: declaration.parameters,
-    declarationEnv: env,
-    body: declaration.body
-  };
-  return env.declareVar(declaration.name, fn, true);
-}
-function eval_if_statement(declaration, env) {
-  const test = evaluate(declaration.test, env);
-  if (test.value === true) {
-    return eval_body(declaration.body, env);
-  } else if (declaration.alternate) {
-    return eval_body(declaration.alternate, env);
-  } else {
-    return MK_NULL();
-  }
-}
-var eval_body = function(body, env, newEnv = true) {
-  let scope;
-  if (newEnv) {
-    scope = new Environment(env);
-  } else {
-    scope = env;
-  }
-  let result = MK_NULL();
-  for (const stmt of body) {
-    result = evaluate(stmt, scope);
-  }
-  return result;
-};
-function eval_for_statement(declaration, env) {
-  env = new Environment(env);
-  eval_val_declaration(declaration.init, env);
-  const body = declaration.body;
-  const update = declaration.update;
-  let test = evaluate(declaration.test, env);
-  if (test.value !== true)
-    return MK_NULL();
-  do {
-    eval_assignment(update, env);
-    eval_body(body, env, false);
-    test = evaluate(declaration.test, env);
-  } while (test.value);
-  return MK_NULL();
-}
-function eval_try_catch_statement(env, declaration) {
-  const try_env = new Environment(env);
-  const catch_env = new Environment(env);
-  try {
-    return eval_body(declaration.body, try_env, false);
-  } catch (e) {
-    env.assignVar("error", e);
-    return eval_body(declaration.alternate, catch_env, false);
-  }
-}
-
-// src/runtime/interpreter.ts
-function evaluate(astNode, env) {
-  switch (astNode.kind) {
-    case "NumericLiteral":
-      return { value: astNode.value, type: "number" };
-    case "StringLiteral":
-      return { value: astNode.value, type: "string" };
-    case "Identifier":
-      return eval_identifier(astNode, env);
-    case "ObjectLiteral":
-      return eval_object_expr(astNode, env);
-    case "CallExpr":
-      return eval_call_expr(astNode, env);
-    case "AssignmentExpr":
-      return eval_assignment(astNode, env);
-    case "BinaryExpr":
-      return eval_binary_expr(astNode, env);
-    case "Program":
-      return eval_program(astNode, env);
-    case "IfStatement":
-      return eval_if_statement(astNode, env);
-    case "ForStatement":
-      return eval_for_statement(astNode, env);
-    case "MemberExpr":
-      return eval_member_expr(env, null, astNode);
-    case "TryCatchStatement":
-      return eval_try_catch_statement(env, astNode);
-    case "VarDeclaration":
-      return eval_val_declaration(astNode, env);
-    case "FunctionDeclaration":
-      return eval_function_declaration(astNode, env);
-    default:
-      console.error("This AST node has not yet been setup for interpretation", astNode);
-      process.exit(0);
-  }
-}
-
-// src/main.ts
+// src/utils/stdin.ts
 import * as readline from "readline/promises";
-import {readFileSync} from "fs";
-
-// src/utils/currency.ts
-var import_currency_symbol_map = __toESM(require_currency_symbol_map(), 1);
-async function getLocalCurrency() {
-  const cSymbol = await (await fetch("https://ipapi.co/currency/")).text();
-  return import_currency_symbol_map.default(cSymbol);
+async function getSTDIN(prompt) {
+  return await Manager.prototype.rl.question(prompt);
 }
 
-// src/utils/transcriber.ts
-async function transcribe(code, bsx) {
-  const currency2 = await getLocalCurrency();
-  if (bsx) {
-    return code.replace_fr("rn", ";").replace_fr(";", "!").replace_fr("be", "=").replace_fr("lit", "let").replace_fr("mf", "const").replace_fr("waffle", "println").replace_fr("sus", "if").replace_fr("impostor", "else").replace_fr("nah", "!=").replace_fr("fr", "==").replace_fr("btw", "&&").replace_fr("carenot", "|").replace_fr("bruh", "fn").replace_fr("nerd", "math").replace_fr("yall", "for").replace_fr("smol", "<").replace_fr("thicc", ">").replace_fr("nocap", "true").replace_fr("cap", "false").replace_fr("fuck_around", "try").replace_fr("find_out", "catch").replace_fr("clapback", "exec").replace_fr("minus", "-").replace_fr("plus", "+").replace_fr("times", "*").replace_fr("divided by", "/").replace(/\: number/g, "").replace(/\: string/g, "").replace(/\: object/g, "").replace(/\: boolean/g, "").replace(new RegExp(`${currency2}{}`), "${}").replace(new RegExp(`{}${currency2}`), "${}");
-  } else {
-    return code.replace(/\: number/g, "").replace(/\: string/g, "").replace(/\: object/g, "").replace(/\: boolean/g, "").replace(new RegExp(`${currency2}{}`), "${}").replace(new RegExp(`{}${currency2}`), "${}");
-  }
+class Manager {
+  rl;
 }
-String.prototype.replace_fr = function(target, replacement) {
-  const pattern = new RegExp('(?<![\'"`])\\b' + target + '\\b(?!["\'`])', "g");
-  return this.replace(pattern, replacement);
+Manager.prototype.rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+getSTDIN.closed = false;
+getSTDIN.close = function close() {
+  Manager.prototype.rl.close();
+  getSTDIN.closed = true;
+  Manager.prototype.rl = null;
 };
+getSTDIN.open = function open() {
+  Manager.prototype.rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+};
+var stdin_default = getSTDIN;
 
 // node_modules/chalk/source/vendor/ansi-styles/index.js
 var assembleStyles = function() {
@@ -1547,19 +1205,19 @@ var proto = Object.defineProperties(() => {
     }
   }
 });
-var createStyler = (open, close, parent) => {
+var createStyler = (open2, close2, parent) => {
   let openAll;
   let closeAll;
   if (parent === undefined) {
-    openAll = open;
-    closeAll = close;
+    openAll = open2;
+    closeAll = close2;
   } else {
-    openAll = parent.openAll + open;
-    closeAll = close + parent.closeAll;
+    openAll = parent.openAll + open2;
+    closeAll = close2 + parent.closeAll;
   }
   return {
-    open,
-    close,
+    open: open2,
+    close: close2,
     openAll,
     closeAll,
     parent
@@ -1599,6 +1257,398 @@ var chalk = createChalk();
 var chalkStderr = createChalk({ level: stderrColor ? stderrColor.level : 0 });
 var source_default = chalk;
 
+// src/runtime/environment.ts
+function createGlobalEnv() {
+  const env2 = new Environment;
+  env2.declareVar("true", MK_BOOL(true), true);
+  env2.declareVar("false", MK_BOOL(false), true);
+  env2.declareVar("null", MK_NULL(), true);
+  env2.declareVar("println", MK_NATIVE_FN((args) => {
+    printValues(args);
+    return MK_NULL();
+  }), true);
+  env2.declareVar("exec", MK_NATIVE_FN((args) => {
+    const cmd = args[0].value;
+    try {
+      const result = execSync(cmd, { encoding: "utf-8" });
+      return MK_STRING(result.trim());
+    } catch (error) {
+      throw error;
+    }
+  }), true);
+  env2.declareVar("input", MK_NATIVE_FN((data) => {
+    let value = "";
+    stdin_default(data[0].value).then((input) => value = input).catch(console.error);
+    stdin_default.close();
+    return MK_STRING(value);
+  }), true);
+  env2.declareVar("math", MK_OBJECT(new Map().set("pi", Math.PI).set("sqrt", MK_NATIVE_FN((args) => {
+    const arg = args[0].value;
+    return MK_NUMBER(Math.sqrt(arg));
+  })).set("random", MK_NATIVE_FN((args) => {
+    const arg1 = args[0].value;
+    const arg2 = args[1].value;
+    const min = Math.ceil(arg1);
+    const max = Math.floor(arg2);
+    return MK_NUMBER(Math.floor(Math.random() * (max - min + 1)) + min);
+  })).set("round", MK_NATIVE_FN((args) => {
+    const arg = args[0].value;
+    return MK_NUMBER(Math.round(arg));
+  })).set("ceil", MK_NATIVE_FN((args) => {
+    const arg = args[0].value;
+    return MK_NUMBER(Math.ceil(arg));
+  })).set("abs", MK_NATIVE_FN((args) => {
+    const arg = args[0].value;
+    return MK_NUMBER(Math.abs(arg));
+  }))), true);
+  env2.declareVar("http", MK_OBJECT(new Map().set("get", MK_NATIVE_FN((url) => {
+    const req = fetch(url[0].value);
+    return MK_OBJECT(new Map().set("json", MK_NATIVE_FN(() => {
+      return MK_STRING("");
+    })).set("text", MK_NATIVE_FN(() => {
+      return MK_STRING("");
+    })).set("code", MK_NUMBER(0)).set("ok", MK_BOOL(false)));
+  }))), true);
+  env2.declareVar("error", MK_NATIVE_FN((message) => {
+
+    class BussinError {
+      message;
+      constructor(message2) {
+        this.message = `${source_default.red("error")}: ${message2}`;
+      }
+    }
+    console.log(new BussinError(message[0].value).message);
+    return MK_NULL();
+  }), true);
+  env2.declareVar("strcon", MK_NATIVE_FN((args, env3) => {
+    let res = "";
+    for (let i = 0;i < args.length; i++) {
+      const arg = args[i];
+      res += arg.value;
+    }
+    return MK_STRING(res);
+  }), true);
+  env2.declareVar("format", MK_NATIVE_FN((args, env3) => {
+    const str = args.shift();
+    let res = "";
+    for (let i = 0;i < args.length; i++) {
+      const arg = args[i];
+      res = str.value.replace(/\${}/, arg.value);
+    }
+    if (!args[0])
+      throw "2nd parameter in format! missing.";
+    return MK_STRING(res);
+  }), true);
+  function timeFunction(args, env3) {
+    return MK_NUMBER(Date.now());
+  }
+  env2.declareVar("time", MK_NATIVE_FN(timeFunction), true);
+  return env2;
+}
+
+class Environment {
+  parent;
+  variables;
+  constants;
+  constructor(parentENV) {
+    const global = parentENV ? true : false;
+    this.parent = parentENV;
+    this.variables = new Map;
+    this.constants = new Set;
+  }
+  declareVar(varname, value, constant) {
+    if (this.variables.has(varname)) {
+      throw `Cannot declare variable ${varname}. As it already is defined.`;
+    }
+    this.variables.set(varname, value);
+    if (constant)
+      this.constants.add(varname);
+    return value;
+  }
+  assignVar(varname, value) {
+    const env2 = this.resolve(varname);
+    if (env2.constants.has(varname)) {
+      throw `Cannot reassign to variable "${varname}" as it's constant.`;
+    }
+    env2.variables.set(varname, value);
+    return value;
+  }
+  lookupOrMutObject(expr, value, property) {
+    if (expr.object.kind === "MemberExpr")
+      return this.lookupOrMutObject(expr.object, value, expr.property);
+    const varname = expr.object.symbol;
+    const env2 = this.resolve(varname);
+    let pastVal = env2.variables.get(varname);
+    const prop = property ? property.symbol : expr.property.symbol;
+    const currentProp = expr.property.symbol;
+    if (currentProp)
+      pastVal = pastVal.properties.get(currentProp);
+    if (value)
+      pastVal.properties.set(prop, value);
+    return pastVal;
+  }
+  lookupVar(varname) {
+    const env2 = this.resolve(varname);
+    return env2.variables.get(varname);
+  }
+  resolve(varname) {
+    if (this.variables.has(varname))
+      return this;
+    if (this.parent == undefined)
+      throw `Cannot resolve '${varname}' as it does not exist.`;
+    return this.parent.resolve(varname);
+  }
+}
+
+// src/runtime/eval/expressions.ts
+function eval_numeric_binary_expr(lhs, rhs, operator) {
+  if (operator === "!=") {
+    return equals(lhs, rhs, false);
+  } else if (operator === "==") {
+    return equals(lhs, rhs, true);
+  } else if (operator === "&&") {
+    return equals(lhs, rhs, true);
+  } else if (operator === "|") {
+    const llhs = lhs;
+    const rrhs = rhs;
+    return MK_BOOL(llhs.value || rrhs.value);
+  } else if (lhs.type === "number" && rhs.type === "number") {
+    const llhs = lhs;
+    const rrhs = rhs;
+    switch (operator) {
+      case "+":
+        return MK_NUMBER(llhs.value + rrhs.value);
+      case "-":
+        return MK_NUMBER(llhs.value - rrhs.value);
+      case "*":
+        return MK_NUMBER(llhs.value * rrhs.value);
+      case "/":
+        return MK_NUMBER(llhs.value / rrhs.value);
+      case "%":
+        return MK_NUMBER(llhs.value % rrhs.value);
+      case "<":
+        return MK_BOOL(llhs.value < rrhs.value);
+      case ">":
+        return MK_BOOL(llhs.value > rrhs.value);
+      default:
+        throw `Unknown operator provided in operation: ${lhs}, ${rhs}.`;
+    }
+  } else {
+    return MK_NULL();
+  }
+}
+var equals = function(lhs, rhs, strict) {
+  const compare = strict ? (a, b) => a === b : (a, b) => a !== b;
+  switch (lhs.type) {
+    case "boolean":
+      return MK_BOOL(compare(lhs.value, rhs.value));
+    case "number":
+      return MK_BOOL(compare(lhs.value, rhs.value));
+    case "string":
+      return MK_BOOL(compare(lhs.value, rhs.value));
+    case "fn":
+      return MK_BOOL(compare(lhs.body, rhs.body));
+    case "native-fn":
+      return MK_BOOL(compare(lhs.call, rhs.call));
+    case "null":
+      return MK_BOOL(compare(lhs.value, rhs.value));
+    case "object":
+      return MK_BOOL(compare(lhs.properties, rhs.properties));
+    default:
+      throw `Unhandled type in: ${lhs}, ${rhs}`;
+  }
+};
+function eval_binary_expr(binop, env2) {
+  const lhs = evaluate(binop.left, env2);
+  const rhs = evaluate(binop.right, env2);
+  return eval_numeric_binary_expr(lhs, rhs, binop.operator);
+}
+function eval_identifier(ident, env2) {
+  const val = env2.lookupVar(ident.symbol);
+  return val;
+}
+function eval_assignment(node, env2) {
+  if (node.assigne.kind === "MemberExpr")
+    return eval_member_expr(env2, node);
+  if (node.assigne.kind !== "Identifier")
+    throw `Invalid left-hand-side expression: ${JSON.stringify(node.assigne)}.`;
+  const varname = node.assigne.symbol;
+  return env2.assignVar(varname, evaluate(node.value, env2));
+}
+function eval_object_expr(obj, env2) {
+  const object = { type: "object", properties: new Map };
+  for (const { key, value } of obj.properties) {
+    const runtimeVal = value == undefined ? env2.lookupVar(key) : evaluate(value, env2);
+    object.properties.set(key, runtimeVal);
+  }
+  return object;
+}
+function eval_call_expr(expr, env2) {
+  const args = expr.args.map((arg) => evaluate(arg, env2));
+  const fn = evaluate(expr.caller, env2);
+  if (fn.type == "native-fn") {
+    const result = fn.call(args, env2);
+    return result;
+  }
+  if (fn.type == "fn") {
+    const func = fn;
+    const scope = new Environment(func.declarationEnv);
+    for (let i = 0;i < func.parameters.length; i++) {
+      const varname = func.parameters[i];
+      scope.declareVar(varname, args[i], false);
+    }
+    let result = MK_NULL();
+    for (const stmt of func.body) {
+      result = evaluate(stmt, scope);
+    }
+    return result;
+  }
+  throw "Cannot call value that is not a function: " + JSON.stringify(fn);
+}
+function eval_member_expr(env2, node, expr) {
+  if (expr) {
+    const variable = env2.lookupOrMutObject(expr);
+    return variable;
+  } else if (node) {
+    const variable = env2.lookupOrMutObject(node.assigne, evaluate(node.value, env2));
+    return variable;
+  } else {
+    throw `Evaluating a member expression is not possible without a member or assignment expression.`;
+  }
+}
+
+// src/runtime/eval/statements.ts
+function eval_program(program, env2) {
+  let lastEvaluated = MK_NULL();
+  for (const statement of program.body) {
+    lastEvaluated = evaluate(statement, env2);
+  }
+  return lastEvaluated;
+}
+function eval_val_declaration(declaration, env2) {
+  const value = declaration.value ? evaluate(declaration.value, env2) : MK_NULL();
+  return env2.declareVar(declaration.identifier, value, declaration.constant);
+}
+function eval_function_declaration(declaration, env2) {
+  const fn = {
+    type: "fn",
+    name: declaration.name,
+    parameters: declaration.parameters,
+    declarationEnv: env2,
+    body: declaration.body
+  };
+  return env2.declareVar(declaration.name, fn, true);
+}
+function eval_if_statement(declaration, env2) {
+  const test = evaluate(declaration.test, env2);
+  if (test.value === true) {
+    return eval_body(declaration.body, env2);
+  } else if (declaration.alternate) {
+    return eval_body(declaration.alternate, env2);
+  } else {
+    return MK_NULL();
+  }
+}
+var eval_body = function(body, env2, newEnv = true) {
+  let scope;
+  if (newEnv) {
+    scope = new Environment(env2);
+  } else {
+    scope = env2;
+  }
+  let result = MK_NULL();
+  for (const stmt of body) {
+    result = evaluate(stmt, scope);
+  }
+  return result;
+};
+function eval_for_statement(declaration, env2) {
+  env2 = new Environment(env2);
+  eval_val_declaration(declaration.init, env2);
+  const body = declaration.body;
+  const update = declaration.update;
+  let test = evaluate(declaration.test, env2);
+  if (test.value !== true)
+    return MK_NULL();
+  do {
+    eval_assignment(update, env2);
+    eval_body(body, env2, false);
+    test = evaluate(declaration.test, env2);
+  } while (test.value);
+  return MK_NULL();
+}
+function eval_try_catch_statement(env2, declaration) {
+  const try_env = new Environment(env2);
+  const catch_env = new Environment(env2);
+  try {
+    return eval_body(declaration.body, try_env, false);
+  } catch (e) {
+    env2.assignVar("error", e);
+    return eval_body(declaration.alternate, catch_env, false);
+  }
+}
+
+// src/runtime/interpreter.ts
+function evaluate(astNode, env2) {
+  switch (astNode.kind) {
+    case "NumericLiteral":
+      return { value: astNode.value, type: "number" };
+    case "StringLiteral":
+      return { value: astNode.value, type: "string" };
+    case "Identifier":
+      return eval_identifier(astNode, env2);
+    case "ObjectLiteral":
+      return eval_object_expr(astNode, env2);
+    case "CallExpr":
+      return eval_call_expr(astNode, env2);
+    case "AssignmentExpr":
+      return eval_assignment(astNode, env2);
+    case "BinaryExpr":
+      return eval_binary_expr(astNode, env2);
+    case "Program":
+      return eval_program(astNode, env2);
+    case "IfStatement":
+      return eval_if_statement(astNode, env2);
+    case "ForStatement":
+      return eval_for_statement(astNode, env2);
+    case "MemberExpr":
+      return eval_member_expr(env2, null, astNode);
+    case "TryCatchStatement":
+      return eval_try_catch_statement(env2, astNode);
+    case "VarDeclaration":
+      return eval_val_declaration(astNode, env2);
+    case "FunctionDeclaration":
+      return eval_function_declaration(astNode, env2);
+    default:
+      console.error("This AST node has not yet been setup for interpretation", astNode);
+      process.exit(0);
+  }
+}
+
+// src/main.ts
+import {readFileSync} from "fs";
+
+// src/utils/currency.ts
+var import_currency_symbol_map = __toESM(require_currency_symbol_map(), 1);
+async function getLocalCurrency() {
+  const cSymbol = await (await fetch("https://ipapi.co/currency/")).text();
+  return import_currency_symbol_map.default(cSymbol);
+}
+
+// src/utils/transcriber.ts
+async function transcribe(code, bsx) {
+  const currency2 = await getLocalCurrency();
+  if (bsx) {
+    return code.replace_fr("rn", ";").replace_fr(";", "!").replace_fr("be", "=").replace_fr("lit", "let").replace_fr("mf", "const").replace_fr("waffle", "println").replace_fr("sus", "if").replace_fr("impostor", "else").replace_fr("nah", "!=").replace_fr("fr", "==").replace_fr("btw", "&&").replace_fr("carenot", "|").replace_fr("bruh", "fn").replace_fr("nerd", "math").replace_fr("yall", "for").replace_fr("smol", "<").replace_fr("thicc", ">").replace_fr("nocap", "true").replace_fr("cap", "false").replace_fr("fuck_around", "try").replace_fr("find_out", "catch").replace_fr("clapback", "exec").replace_fr("minus", "-").replace_fr("plus", "+").replace_fr("times", "*").replace_fr("divided by", "/").replace_fr("yeet", "throw").replace_fr("rizz", "error").replace(/\: number/g, "").replace(/\: string/g, "").replace(/\: object/g, "").replace(/\: boolean/g, "").replace(new RegExp(`${currency2}{}`), "${}").replace(new RegExp(`{}${currency2}`), "${}");
+  } else {
+    return code.replace(/\: number/g, "").replace(/\: string/g, "").replace(/\: object/g, "").replace(/\: boolean/g, "").replace(new RegExp(`${currency2}{}`), "${}").replace(new RegExp(`{}${currency2}`), "${}");
+  }
+}
+String.prototype.replace_fr = function(target, replacement) {
+  const pattern = new RegExp('(?<![\'"`])\\b' + target + '\\b(?!["\'`])', "g");
+  return this.replace(pattern, replacement);
+};
+
 // src/main.ts
 async function run(filename) {
   await fetch("https://8.8.8.8");
@@ -1616,8 +1666,14 @@ async function repl(arg) {
   const env2 = createGlobalEnv();
   console.log("Repl v1.0 (Bussin)");
   while (true) {
-    let input = await rl.question("> ");
-    if (!input || input.includes("exit")) {
+    let input = "";
+    if (!stdin_default.closed) {
+      input = await stdin_default("> ");
+    } else {
+      stdin_default.open();
+      input = await stdin_default("> ");
+    }
+    if (input === "exit()") {
       process.exit(1);
     }
     input = await transcribe(input, arg !== "--bsx" ? false : true);
@@ -1628,24 +1684,20 @@ async function repl(arg) {
         console.log(source_default.green(`'${result.value}'`));
       } else if (typeof result.value === "number") {
         if (isNaN(result.value)) {
-          console.log(null);
+          console.log();
         } else {
           console.log(source_default.yellow(`${result.value}`));
         }
       } else if (typeof result.value === "boolean") {
         console.log(source_default.yellow(`${result.value}`));
       } else {
-        console.log(null);
+        console.log();
       }
     } else {
-      console.log(result);
+      console.log();
     }
   }
 }
-var rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
 var file = process.argv[2] && !process.argv[2].startsWith("-") && process.argv[2];
 if (file) {
   run(file);
