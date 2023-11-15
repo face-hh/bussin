@@ -751,7 +751,7 @@ function MK_OBJECT(obj) {
 }
 
 // src/utils/stdin.ts
-import * as readline from "readline/promises";
+import * as readline from "node:readline/promises";
 async function getSTDIN(prompt) {
   return await Manager.prototype.rl.question(prompt);
 }
