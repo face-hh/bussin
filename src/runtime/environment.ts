@@ -72,14 +72,18 @@ export function createGlobalEnv(): Environment {
 
     env.declareVar("http", MK_OBJECT(new Map()
     .set("get", MK_NATIVE_FN((url)=>{
-        const req = fetch((url[0] as StringVal).value)
+        const req = {
+            req: ((url[0] as StringVal).value),
+            json: ()=>{},
+            text: ()=>""
+        }
 
         return MK_OBJECT(new Map()
         .set("json", MK_NATIVE_FN(()=>{
-            return MK_STRING("")
+            return MK_STRING(JSON.stringify(req.json()))
         }))
         .set("text", MK_NATIVE_FN(()=>{
-            return MK_STRING("")
+            return MK_STRING(req.text())
         }))
         .set("code", MK_NUMBER(0))
         .set("ok", MK_BOOL(false)))
@@ -201,8 +205,16 @@ export default class Environment {
     public resolve(varname: string): Environment {
         if (this.variables.has(varname)) return this;
 
-        if (this.parent == undefined) throw `Cannot resolve '${varname}' as it does not exist.`;
+        if (this.parent == undefined) {
+            this.error(`Can't find ${varname}`)
+            return this
+        }
 
         return this.parent.resolve(varname);
+    }
+
+    public error(message: string): void {
+
+        return console.log(`${chalk.red("error")}: ${message}`)
     }
 }
