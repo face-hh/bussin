@@ -19,10 +19,16 @@ export default class Parser {
     }
 
     private expect(type: TokenType, err: any) {
+        class BussinError {
+            message;
+            constructor(message2) {
+            this.message = `${source_default.red("error")}: ${message2}`;
+            }
+        }       
         const prev = this.tokens.shift() as Token;
         if (!prev || prev.type != type) {
-            console.error(`Parser error:\n`, err, prev, "Expecting: ", type);
-            process.exit(1)
+            console.log(new BussinError(`Parser error:\n`, err, prev, "Expecting: ", type));
+            return
         }
 
         return prev;
