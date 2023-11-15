@@ -1,0 +1,77 @@
+waffle("Mandelbrot set visualiser written in Bussin X by SKM GEEK.")
+
+bruh mandelbrot(real, imag) {
+    lit limit be 100 rn
+    lit zReal be real rn
+    lit zImag be imag rn
+
+    lit break be cap rn
+
+    lit return be limit rn
+
+    yall (lit i be 0 rn i smol limit rn i be i + 1) {
+        sus (break fr cap) {
+            lit rtwo be zReal * zReal rn
+            lit itwo be zImag * zImag rn
+
+            sus (rtwo + itwo thicc 4) {
+                break be nocap
+                return be i
+            } impostor {
+                zImag be 2 * zReal * zImag + imag
+                zReal be rtwo - itwo + real
+            }
+        }
+    }
+    return
+}
+
+lit width be 150 rn
+lit height be 50 rn
+
+lit xstart be 0 - (9/4) rn
+lit xfin be (1/4) rn
+lit ystart be 0 - 1 rn
+lit yfin be 1 rn
+
+lit dx be (yfin - xstart) / (width - 1) rn
+lit dy be (yfin - ystart) / (height - 1) rn
+
+lit line be "${}" rn
+lit x be 0 rn
+lit y be 0 rn
+lit value be 0 rn
+
+lit borderH be "++${}" rn
+yall (lit i be 0 rn i smol width rn i be i + 1) {
+    borderH be format(borderH, "=${}")
+}
+borderH be format(borderH, "++")
+waffle(borderH)
+
+yall (lit i be 0 rn i smol height rn i be i + 1) {
+    line be "||${}"
+    yall (lit j be 0 rn j smol width rn j be j + 1) {
+        x be xstart + j*dx
+        y be ystart + i*dy
+
+        value be mandelbrot(x,y)
+
+        sus (value fr 100) {
+            line be format(line, " ${}")
+        } impostor sus (value thicc 50) {
+            line be format(line, "-${}")
+        } impostor sus (value thicc 25) {
+            line be format(line, "+${}")
+        } impostor sus (value thicc 10) {
+            line be format(line, "o${}")
+        } impostor sus (value thicc 5) {
+            line be format(line, "0${}")
+        } impostor {
+            line be format(line, "#${}")
+        }
+    }
+    line be format(line, "||")
+    waffle(line)
+}
+waffle(borderH)
