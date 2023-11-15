@@ -102,115 +102,143 @@ export function tokenize(sourceCode: string): Token[] {
 
     // produce tokens until the EOF is reached.
     while (src.length > 0) {
-        // BEGIN PARSING ONE CHARACTER TOKENS
-        if (src[0] == "(") {
-            tokens.push(token(src.shift(), TokenType.OpenParen));
-        } else if (src[0] == ")") {
-            tokens.push(token(src.shift(), TokenType.CloseParen));
-        } else if (src[0] == "{") {
-            tokens.push(token(src.shift(), TokenType.OpenBrace));
-        } else if (src[0] == "}") {
-            tokens.push(token(src.shift(), TokenType.CloseBrace));
-        } else if (src[0] == "[") {
-            tokens.push(token(src.shift(), TokenType.OpenBracket));
-        } else if (src[0] == "]") {
-            tokens.push(token(src.shift(), TokenType.CloseBracket));
-        } // HANDLE BINARY OPERATORS
-        else if (src[0] == "+" || src[0] == "-" || src[0] == "*" || src[0] == "%" || src[0] == "/") {
-            tokens.push(token(src.shift(), TokenType.BinaryOperator));
-        } // Handle Conditional & Assignment Tokens
-        else if (src[0] == "<") {
-            tokens.push(token(src.shift(), TokenType.Lesser));
-        } else if (src[0] == ">") {
-            tokens.push(token(src.shift(), TokenType.Greater));
-        } else if (src[0] == ".") {
-            tokens.push(token(src.shift(), TokenType.Dot));
-        } else if (src[0] == ";") {
-            tokens.push(token(src.shift(), TokenType.Semicolon));
-        } else if (src[0] == ":") {
-            tokens.push(token(src.shift(), TokenType.Colon));
-        } else if (src[0] == ",") {
-            tokens.push(token(src.shift(), TokenType.Comma));
-        } else if (src[0] == "|") {
-            tokens.push(token(src.shift(), TokenType.Bar));
-        } // HANDLE MULTICHARACTER KEYWORDS, TOKENS, IDENTIFIERS ETC...
-        else {
-            // Handle numeric literals -> Integers
-            if (isint(src[0])) {
-                let num = "";
-                while (src.length > 0 && isint(src[0])) {
-                    num += src.shift();
-                }
 
-                // append new numeric token.
-                tokens.push(token(num, TokenType.Number));
-            } else if (src[0] == '=') {
-                src.shift()
-                if (src[0] == '=') {
-                    src.shift()
-                    tokens.push(token("==", TokenType.EqualsCompare));
+        switch(src[0]){
+            // BEGIN PARSING ONE CHARACTER TOKENS
+            case "(":
+                tokens.push(token(src.shift(), TokenType.OpenParen));
+                break;
+            case ")":
+                tokens.push(token(src.shift(), TokenType.CloseParen));
+                break;
+            case "{":
+                tokens.push(token(src.shift(), TokenType.OpenBrace));
+                break;
+            case "}":
+                tokens.push(token(src.shift(), TokenType.CloseBrace));
+                break;
+            case "[":
+                tokens.push(token(src.shift(), TokenType.OpenBracket));
+                break;
+            case "]":
+                tokens.push(token(src.shift(), TokenType.CloseBracket));
+                break;
+            // HANDLE BINARY OPERATORS
+            case "+":
+            case "-":
+            case "*":
+            case "%":
+            case "/":
+                tokens.push(token(src.shift(), TokenType.BinaryOperator));
+                break;
+            // Handle Conditional & Assignment Tokens
+            case "<":
+                tokens.push(token(src.shift(), TokenType.Lesser));
+                break;
+            case ">":
+                tokens.push(token(src.shift(), TokenType.Greater));
+                break;
+            case ".":
+                tokens.push(token(src.shift(), TokenType.Dot));
+                break;
+            case ";":
+                tokens.push(token(src.shift(), TokenType.Semicolon));
+                break;
+            case ":":
+                tokens.push(token(src.shift(), TokenType.Colon));
+                break;
+            case ",":
+                tokens.push(token(src.shift(), TokenType.Comma));
+                break;
+            case "|":
+                tokens.push(token(src.shift(), TokenType.Bar));
+                break;
+            default:
+                if (isint(src[0])) {
+                    let num = "";
+                    while (src.length > 0 && isint(src[0])) {
+                        num += src.shift();
+                    }
+        
+                    // append new numeric token.
+                    tokens.push(token(num, TokenType.Number));
                 } else {
-                    tokens.push(token("=", TokenType.Equals));
-                }
-            } else if (src[0] == '&') {
-                src.shift()
-                if (src[0] == '&') {
-                    src.shift()
-                    tokens.push(token("&&", TokenType.And));
-                } else {
-                    tokens.push(token("&", TokenType.Ampersand));
-                }
-            } else if (src[0] == '!') {
-                src.shift();
 
-                if (String(src[0]) == '=') {
-                    src.shift()
-                    tokens.push(token("!=", TokenType.NotEqualsCompare));
-                } else {
-                    tokens.push(token("!", TokenType.Exclamation));
+                    switch(src[0]) {
+                        case "=":
+                            src.shift()
+                            if (src[0] == '=') {
+                                src.shift()
+                                tokens.push(token("==", TokenType.EqualsCompare));
+                            } else {
+                                tokens.push(token("=", TokenType.Equals));
+                            }
+                            break;
+                        case "&":
+                            src.shift()
+                            if (src[0] == '&') {
+                                src.shift()
+                                tokens.push(token("&&", TokenType.And));
+                            } else {
+                                tokens.push(token("&", TokenType.Ampersand));
+                            }
+                            break;
+                        case "!":
+                            src.shift();
+                            if (String(src[0]) == '=') {
+                                src.shift()
+                                tokens.push(token("!=", TokenType.NotEqualsCompare));
+                            } else {
+                                tokens.push(token("!", TokenType.Exclamation));
+                            }
+                            break;
+                        case '"':
+                            let str = "";
+                            src.shift();
+                
+                            while (src.length > 0 && src[0] !== '"') {
+                                str += src.shift();
+                            }
+                
+                            src.shift();
+                
+                            // append new string token.
+                            tokens.push(token(str, TokenType.String));
+                            break;
+                        default:
+                            if (isalpha(src[0])) {
+                                let ident = "";
+                                while (src.length > 0 && isalpha(src[0])) {
+                                    ident += src.shift();
+                                }
+                    
+                                // CHECK FOR RESERVED KEYWORDS
+                                const reserved = KEYWORDS[ident];
+                                // If value is not undefined then the identifier is
+                                // reconized keyword
+                                if (typeof reserved == "number") {
+                                    tokens.push(token(ident, reserved));
+                                } else {
+                                    // Unreconized name must mean user defined symbol.
+                                    tokens.push(token(ident, TokenType.Identifier));
+                                }
+                            } else if (isskippable(src[0])) {
+                                // Skip uneeded chars.
+                                src.shift();
+                            } // Handle unreconized characters.
+                            // TODO: Impliment better errors and error recovery.
+                            else {
+                                console.error(
+                                    "Unreconized character found in source: ",
+                                    src[0].charCodeAt(0),
+                                    src[0]
+                                );
+                                process.exit(1);
+                            }
+                            break;
+                    }
                 }
-            } else if (src[0] == '"') {
-                let str = "";
-                src.shift();
-
-                while (src.length > 0 && src[0] !== '"') {
-                    str += src.shift();
-                }
-
-                src.shift();
-
-                // append new string token.
-                tokens.push(token(str, TokenType.String));
-            } // Handle Identifier & Keyword Tokens.
-            else if (isalpha(src[0])) {
-                let ident = "";
-                while (src.length > 0 && isalpha(src[0])) {
-                    ident += src.shift();
-                }
-
-                // CHECK FOR RESERVED KEYWORDS
-                const reserved = KEYWORDS[ident];
-                // If value is not undefined then the identifier is
-                // reconized keyword
-                if (typeof reserved == "number") {
-                    tokens.push(token(ident, reserved));
-                } else {
-                    // Unreconized name must mean user defined symbol.
-                    tokens.push(token(ident, TokenType.Identifier));
-                }
-            } else if (isskippable(src[0])) {
-                // Skip uneeded chars.
-                src.shift();
-            } // Handle unreconized characters.
-            // TODO: Impliment better errors and error recovery.
-            else {
-                console.error(
-                    "Unreconized character found in source: ",
-                    src[0].charCodeAt(0),
-                    src[0]
-                );
-                process.exit(1);
-            }
+                break;
         }
     }
 
