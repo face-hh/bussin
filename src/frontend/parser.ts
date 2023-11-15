@@ -1,6 +1,8 @@
 import { Stmt, Program, Expr, BinaryExpr, NumericLiteral, Identifier, VarDeclaration, AssignmentExpr, Property, ObjectLiteral, CallExpr, MemberExpr, FunctionDeclaration, StringLiteral, IfStatement, ForStatement, TryCatchStatement } from "./ast";
 import { tokenize, Token, TokenType } from "./lexer";
 
+import chalk from "chalk"
+
 export default class Parser {
     private tokens: Token[] = [];
 
