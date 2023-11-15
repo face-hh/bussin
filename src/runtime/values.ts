@@ -30,8 +30,6 @@ export interface StringVal extends RuntimeVal {
 export interface ObjectVal extends RuntimeVal {
     type: "object",
     properties: Map<string, RuntimeVal>
-    set: NativeFnValue,
-    get: NativeFnValue
 }
 
 
@@ -70,5 +68,5 @@ export function MK_STRING(val: string){
 }
 
 export function MK_OBJECT(obj: Map<string, RuntimeVal>){
-    return { type: "object", properties: obj, set: MK_NATIVE_FN((loc, val)=>{}), get: MK_NATIVE_FN((loc)) } as ObjectVal;
+    return { type: "object", properties: obj } as ObjectVal;
 }
