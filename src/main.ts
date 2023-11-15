@@ -2,16 +2,12 @@ import Parser from "./frontend/parser";
 import { createGlobalEnv } from "./runtime/environment";
 import { evaluate } from "./runtime/interpreter";
 
-import * as readline from 'readline/promises';
+import getSTDIN from "./utils/stdin";
 import { readFileSync } from "fs";
 import { transcribe } from "./utils/transcriber";
 
 import chalk from "chalk"
-
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
+import { BooleanVal, NumberVal, StringVal } from "./runtime/values";
 
 const file = process.argv[2] && !process.argv[2].startsWith("-") && process.argv[2];
 
@@ -46,10 +42,16 @@ async function repl(arg?: string) {
     console.log("Repl v1.0 (Bussin)");
 
     while (true) {
-        let input = await rl.question("> ");
+        let input = ""
+        if (!getSTDIN.closed) {
+            input = await getSTDIN("> ");
+        } else {
+            getSTDIN.open()
+            input = await getSTDIN("> ")
+        }
 
         // check for no user input or exit keyword.
-        if (!input || input.includes("exit")) {
+        if (input === "exit()") {
             process.exit(1);
         }
 
@@ -59,21 +61,21 @@ async function repl(arg?: string) {
 
         const result = evaluate(program, env);
         if (result.constructor === Object) {
-            if (typeof result.value === "string") {
-                console.log(chalk.green(`'${result.value}'`))
-            } else if (typeof result.value === "number") {
-                if (isNaN(result.value)) {
-                    console.log(null)
+            if (typeof (result as StringVal).value === "string") {
+                console.log(chalk.green(`'${(result as StringVal).value}'`))
+            } else if (typeof (result as NumberVal).value === "number") {
+                if (isNaN((result as NumberVal).value)) {
+                    console.log()
                 } else {
-                    console.log(chalk.yellow(`${result.value}`))
+                    console.log(chalk.yellow(`${(result as NumberVal).value}`))
                 }
-            } else if (typeof result.value === "boolean") {
-                console.log(chalk.yellow(`${result.value}`))
+            } else if (typeof (result as BooleanVal).value === "boolean") {
+                console.log(chalk.yellow(`${(result as BooleanVal).value}`))
             } else {
-                console.log(null)
+                console.log()
             }
         } else {
-            console.log(result);
+            console.log();
         }
     }
 }
