@@ -346,29 +346,30 @@ var TokenType;
   TokenType2[TokenType2["If"] = 6] = "If";
   TokenType2[TokenType2["Else"] = 7] = "Else";
   TokenType2[TokenType2["For"] = 8] = "For";
-  TokenType2[TokenType2["Backslash"] = 9] = "Backslash";
-  TokenType2[TokenType2["BinaryOperator"] = 10] = "BinaryOperator";
-  TokenType2[TokenType2["Equals"] = 11] = "Equals";
-  TokenType2[TokenType2["Comma"] = 12] = "Comma";
-  TokenType2[TokenType2["Colon"] = 13] = "Colon";
-  TokenType2[TokenType2["Semicolon"] = 14] = "Semicolon";
-  TokenType2[TokenType2["Dot"] = 15] = "Dot";
-  TokenType2[TokenType2["OpenParen"] = 16] = "OpenParen";
-  TokenType2[TokenType2["CloseParen"] = 17] = "CloseParen";
-  TokenType2[TokenType2["OpenBrace"] = 18] = "OpenBrace";
-  TokenType2[TokenType2["CloseBrace"] = 19] = "CloseBrace";
-  TokenType2[TokenType2["OpenBracket"] = 20] = "OpenBracket";
-  TokenType2[TokenType2["CloseBracket"] = 21] = "CloseBracket";
-  TokenType2[TokenType2["Quotation"] = 22] = "Quotation";
-  TokenType2[TokenType2["Greater"] = 23] = "Greater";
-  TokenType2[TokenType2["Lesser"] = 24] = "Lesser";
-  TokenType2[TokenType2["EqualsCompare"] = 25] = "EqualsCompare";
-  TokenType2[TokenType2["NotEqualsCompare"] = 26] = "NotEqualsCompare";
-  TokenType2[TokenType2["Exclamation"] = 27] = "Exclamation";
-  TokenType2[TokenType2["And"] = 28] = "And";
-  TokenType2[TokenType2["Ampersand"] = 29] = "Ampersand";
-  TokenType2[TokenType2["Bar"] = 30] = "Bar";
-  TokenType2[TokenType2["EOF"] = 31] = "EOF";
+  TokenType2[TokenType2["Throw"] = 9] = "Throw";
+  TokenType2[TokenType2["Backslash"] = 10] = "Backslash";
+  TokenType2[TokenType2["BinaryOperator"] = 11] = "BinaryOperator";
+  TokenType2[TokenType2["Equals"] = 12] = "Equals";
+  TokenType2[TokenType2["Comma"] = 13] = "Comma";
+  TokenType2[TokenType2["Colon"] = 14] = "Colon";
+  TokenType2[TokenType2["Semicolon"] = 15] = "Semicolon";
+  TokenType2[TokenType2["Dot"] = 16] = "Dot";
+  TokenType2[TokenType2["OpenParen"] = 17] = "OpenParen";
+  TokenType2[TokenType2["CloseParen"] = 18] = "CloseParen";
+  TokenType2[TokenType2["OpenBrace"] = 19] = "OpenBrace";
+  TokenType2[TokenType2["CloseBrace"] = 20] = "CloseBrace";
+  TokenType2[TokenType2["OpenBracket"] = 21] = "OpenBracket";
+  TokenType2[TokenType2["CloseBracket"] = 22] = "CloseBracket";
+  TokenType2[TokenType2["Quotation"] = 23] = "Quotation";
+  TokenType2[TokenType2["Greater"] = 24] = "Greater";
+  TokenType2[TokenType2["Lesser"] = 25] = "Lesser";
+  TokenType2[TokenType2["EqualsCompare"] = 26] = "EqualsCompare";
+  TokenType2[TokenType2["NotEqualsCompare"] = 27] = "NotEqualsCompare";
+  TokenType2[TokenType2["Exclamation"] = 28] = "Exclamation";
+  TokenType2[TokenType2["And"] = 29] = "And";
+  TokenType2[TokenType2["Ampersand"] = 30] = "Ampersand";
+  TokenType2[TokenType2["Bar"] = 31] = "Bar";
+  TokenType2[TokenType2["EOF"] = 32] = "EOF";
 })(TokenType || (TokenType = {}));
 var KEYWORDS = {
   let: TokenType.Let,
@@ -1302,11 +1303,16 @@ function createGlobalEnv() {
     return MK_NUMBER(Math.abs(arg));
   }))), true);
   env2.declareVar("http", MK_OBJECT(new Map().set("get", MK_NATIVE_FN((url) => {
-    const req = fetch(url[0].value);
+    const req = {
+      req: url[0].value,
+      json: () => {
+      },
+      text: () => ""
+    };
     return MK_OBJECT(new Map().set("json", MK_NATIVE_FN(() => {
-      return MK_STRING("");
+      return MK_STRING(JSON.stringify(req.json()));
     })).set("text", MK_NATIVE_FN(() => {
-      return MK_STRING("");
+      return MK_STRING(req.text());
     })).set("code", MK_NUMBER(0)).set("ok", MK_BOOL(false)));
   }))), true);
   env2.declareVar("error", MK_NATIVE_FN((message) => {
@@ -1394,9 +1400,14 @@ class Environment {
   resolve(varname) {
     if (this.variables.has(varname))
       return this;
-    if (this.parent == undefined)
-      throw `Cannot resolve '${varname}' as it does not exist.`;
+    if (this.parent == undefined) {
+      this.error(`Can't find ${varname}`);
+      return this;
+    }
     return this.parent.resolve(varname);
+  }
+  error(message) {
+    return console.log(`${source_default.red("error")}: ${message}`);
   }
 }
 
@@ -1681,23 +1692,25 @@ async function repl(arg) {
     input = await transcribe(input, arg !== "--bsx" ? false : true);
     const program = parser2.produceAST(input);
     const result = evaluate(program, env2);
-    if (result.constructor === Object) {
-      if (typeof result.value === "string") {
-        console.log(source_default.green(`'${result.value}'`));
-      } else if (typeof result.value === "number") {
-        if (isNaN(result.value)) {
-          console.log();
-        } else {
+    result && (() => {
+      if (result.constructor === Object) {
+        if (typeof result.value === "string") {
+          console.log(source_default.green(`'${result.value}'`));
+        } else if (typeof result.value === "number") {
+          if (isNaN(result.value)) {
+            console.log();
+          } else {
+            console.log(source_default.yellow(`${result.value}`));
+          }
+        } else if (typeof result.value === "boolean") {
           console.log(source_default.yellow(`${result.value}`));
+        } else {
+          console.log();
         }
-      } else if (typeof result.value === "boolean") {
-        console.log(source_default.yellow(`${result.value}`));
       } else {
         console.log();
       }
-    } else {
-      console.log();
-    }
+    })();
   }
 }
 var file = process.argv[2] && !process.argv[2].startsWith("-") && process.argv[2];
