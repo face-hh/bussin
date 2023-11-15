@@ -1,6 +1,6 @@
 import getSymbolFromCurrency from 'currency-symbol-map'
 
-export default async function getLocalCurrency(): string {
+export default async function getLocalCurrency() {
   const cSymbol = await (await fetch("https://ipapi.co/currency/")).text()
   return getSymbolFromCurrency(cSymbol)
 }
