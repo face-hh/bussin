@@ -3,7 +3,9 @@ import { exec, execSync } from 'child_process';
 import { Identifier, MemberExpr } from '../frontend/ast';
 import { printValues } from './eval/native-fns';
 import { MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal } from "./values";
-import * as readline from 'readline/promises';
+import getSTDIN from "../utils/stdin"
+
+import chalk from "chalk"
 
 export function createGlobalEnv(): Environment {
     const env = new Environment();
@@ -11,8 +13,6 @@ export function createGlobalEnv(): Environment {
     env.declareVar("true", MK_BOOL(true), true)
     env.declareVar("false", MK_BOOL(false), true)
     env.declareVar("null", MK_NULL(), true)
-
-    env.declareVar("error", MK_NULL(), false)
 
     // Define a native builtin method
     env.declareVar("println", MK_NATIVE_FN((args) => {
@@ -31,15 +31,15 @@ export function createGlobalEnv(): Environment {
         }
     }), true)
 
-    env.declareVar("input", MK_NATIVE_FN(((data) => {
-        const rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout
-        });
-        let value = ""
-        rl.question(data).then((val)=>{value = val}).catch(console.error)
-        return ()=>value
-    })()), true)
+    env.declareVar("input", MK_NATIVE_FN((data) => {
+        let value: string = ""
+
+        getSTDIN((data[0] as StringVal).value).then(input=>value = input).catch(console.error)
+
+        getSTDIN.close()
+
+        return MK_STRING(value)
+    }), true)
 
     env.declareVar("math", MK_OBJECT(
         new Map()
@@ -69,6 +69,34 @@ export function createGlobalEnv(): Environment {
                 return MK_NUMBER(Math.abs(arg))
             }))
     ), true)
+
+    env.declareVar("http", MK_OBJECT(new Map()
+    .set("get", MK_NATIVE_FN((url)=>{
+        const req = fetch((url[0] as StringVal).value)
+
+        return MK_OBJECT(new Map()
+        .set("json", MK_NATIVE_FN(()=>{
+            return MK_STRING("")
+        }))
+        .set("text", MK_NATIVE_FN(()=>{
+            return MK_STRING("")
+        }))
+        .set("code", MK_NUMBER(0))
+        .set("ok", MK_BOOL(false)))
+    }))), true)
+
+    env.declareVar("error", MK_NATIVE_FN((message)=>{
+        class BussinError {
+            message: string
+            constructor(message: string) {
+                this.message = `${chalk.red("error")}: ${message}`
+            }
+        }
+
+        console.log(new BussinError((message[0] as StringVal).value).message)
+
+        return MK_NULL()
+    }), true)
 
     env.declareVar("strcon", MK_NATIVE_FN((args, env) => {
         let res = '';
