@@ -346,30 +346,29 @@ var TokenType;
   TokenType2[TokenType2["If"] = 6] = "If";
   TokenType2[TokenType2["Else"] = 7] = "Else";
   TokenType2[TokenType2["For"] = 8] = "For";
-  TokenType2[TokenType2["Throw"] = 9] = "Throw";
-  TokenType2[TokenType2["Backslash"] = 10] = "Backslash";
-  TokenType2[TokenType2["BinaryOperator"] = 11] = "BinaryOperator";
-  TokenType2[TokenType2["Equals"] = 12] = "Equals";
-  TokenType2[TokenType2["Comma"] = 13] = "Comma";
-  TokenType2[TokenType2["Colon"] = 14] = "Colon";
-  TokenType2[TokenType2["Semicolon"] = 15] = "Semicolon";
-  TokenType2[TokenType2["Dot"] = 16] = "Dot";
-  TokenType2[TokenType2["OpenParen"] = 17] = "OpenParen";
-  TokenType2[TokenType2["CloseParen"] = 18] = "CloseParen";
-  TokenType2[TokenType2["OpenBrace"] = 19] = "OpenBrace";
-  TokenType2[TokenType2["CloseBrace"] = 20] = "CloseBrace";
-  TokenType2[TokenType2["OpenBracket"] = 21] = "OpenBracket";
-  TokenType2[TokenType2["CloseBracket"] = 22] = "CloseBracket";
-  TokenType2[TokenType2["Quotation"] = 23] = "Quotation";
-  TokenType2[TokenType2["Greater"] = 24] = "Greater";
-  TokenType2[TokenType2["Lesser"] = 25] = "Lesser";
-  TokenType2[TokenType2["EqualsCompare"] = 26] = "EqualsCompare";
-  TokenType2[TokenType2["NotEqualsCompare"] = 27] = "NotEqualsCompare";
-  TokenType2[TokenType2["Exclamation"] = 28] = "Exclamation";
-  TokenType2[TokenType2["And"] = 29] = "And";
-  TokenType2[TokenType2["Ampersand"] = 30] = "Ampersand";
-  TokenType2[TokenType2["Bar"] = 31] = "Bar";
-  TokenType2[TokenType2["EOF"] = 32] = "EOF";
+  TokenType2[TokenType2["Backslash"] = 9] = "Backslash";
+  TokenType2[TokenType2["BinaryOperator"] = 10] = "BinaryOperator";
+  TokenType2[TokenType2["Equals"] = 11] = "Equals";
+  TokenType2[TokenType2["Comma"] = 12] = "Comma";
+  TokenType2[TokenType2["Colon"] = 13] = "Colon";
+  TokenType2[TokenType2["Semicolon"] = 14] = "Semicolon";
+  TokenType2[TokenType2["Dot"] = 15] = "Dot";
+  TokenType2[TokenType2["OpenParen"] = 16] = "OpenParen";
+  TokenType2[TokenType2["CloseParen"] = 17] = "CloseParen";
+  TokenType2[TokenType2["OpenBrace"] = 18] = "OpenBrace";
+  TokenType2[TokenType2["CloseBrace"] = 19] = "CloseBrace";
+  TokenType2[TokenType2["OpenBracket"] = 20] = "OpenBracket";
+  TokenType2[TokenType2["CloseBracket"] = 21] = "CloseBracket";
+  TokenType2[TokenType2["Quotation"] = 22] = "Quotation";
+  TokenType2[TokenType2["Greater"] = 23] = "Greater";
+  TokenType2[TokenType2["Lesser"] = 24] = "Lesser";
+  TokenType2[TokenType2["EqualsCompare"] = 25] = "EqualsCompare";
+  TokenType2[TokenType2["NotEqualsCompare"] = 26] = "NotEqualsCompare";
+  TokenType2[TokenType2["Exclamation"] = 27] = "Exclamation";
+  TokenType2[TokenType2["And"] = 28] = "And";
+  TokenType2[TokenType2["Ampersand"] = 29] = "Ampersand";
+  TokenType2[TokenType2["Bar"] = 30] = "Bar";
+  TokenType2[TokenType2["EOF"] = 31] = "EOF";
 })(TokenType || (TokenType = {}));
 var KEYWORDS = {
   let: TokenType.Let,
@@ -1650,9 +1649,9 @@ async function getLocalCurrency() {
 async function transcribe(code, bsx) {
   const currency2 = await getLocalCurrency();
   if (bsx) {
-    return code.replace_fr("rn", ";").replace_fr(";", "!").replace_fr("be", "=").replace_fr("lit", "let").replace_fr("mf", "const").replace_fr("waffle", "println").replace_fr("sus", "if").replace_fr("impostor", "else").replace_fr("nah", "!=").replace_fr("fr", "==").replace_fr("btw", "&&").replace_fr("carenot", "|").replace_fr("bruh", "fn").replace_fr("nerd", "math").replace_fr("yall", "for").replace_fr("smol", "<").replace_fr("thicc", ">").replace_fr("nocap", "true").replace_fr("cap", "false").replace_fr("fuck_around", "try").replace_fr("find_out", "catch").replace_fr("clapback", "exec").replace_fr("minus", "-").replace_fr("plus", "+").replace_fr("times", "*").replace_fr("divided by", "/").replace_fr("yeet", "throw").replace_fr("rizz", "error").replace(/\: number/g, "").replace(/\: string/g, "").replace(/\: object/g, "").replace(/\: boolean/g, "").replace(/[a-zA-Z].\.{2,}[a-zA-Z]/g, "").replace(new RegExp(`${currency2}{}`), "${}").replace(new RegExp(`{}${currency2}`), "${}");
+    return code.replace_fr("rn", ";").replace_fr(";", "!").replace_fr("be", "=").replace_fr("lit", "let").replace_fr("mf", "const").replace_fr("waffle", "println").replace_fr("sus", "if").replace_fr("impostor", "else").replace_fr("nah", "!=").replace_fr("fr", "==").replace_fr("btw", "&&").replace_fr("carenot", "|").replace_fr("bruh", "fn").replace_fr("nerd", "math").replace_fr("yall", "for").replace_fr("smol", "<").replace_fr("thicc", ">").replace_fr("nocap", "true").replace_fr("cap", "false").replace_fr("fuck_around", "try").replace_fr("find_out", "catch").replace_fr("clapback", "exec").replace_fr("minus", "-").replace_fr("plus", "+").replace_fr("times", "*").replace_fr("divided by", "/").replace_fr("yeet", "throw").replace_fr("rizz", "error").replace(/\: number/g, "").replace(/\: string/g, "").replace(/\: object/g, "").replace(/\: boolean/g, "").replace(/[a-zA-Z].\.{1,}[a-zA-Z]/g, "").replace(new RegExp(`${currency2}{}`), "${}").replace(new RegExp(`{}${currency2}`), "${}");
   } else {
-    return code.replace(/\: number/g, "").replace(/\: string/g, "").replace(/\: object/g, "").replace(/\: boolean/g, "").replace(/[a-zA-Z].\.{2,}[a-zA-Z]/g, "").replace(new RegExp(`${currency2}{}`), "${}").replace(new RegExp(`{}${currency2}`), "${}");
+    return code.replace(/\: number/g, "").replace(/\: string/g, "").replace(/\: object/g, "").replace(/\: boolean/g, "").replace(/[a-zA-Z].\.{1,}[a-zA-Z]/g, "").replace(new RegExp(`${currency2}{}`), "${}").replace(new RegExp(`{}${currency2}`), "${}");
   }
 }
 String.prototype.replace_fr = function(target, replacement) {
@@ -1692,7 +1691,9 @@ async function repl(arg) {
     input = await transcribe(input, arg !== "--bsx" ? false : true);
     const program = parser2.produceAST(input);
     const result = evaluate(program, env2);
-    result && (() => {
+    if (!result) {
+      continue;
+    } else {
       if (result.constructor === Object) {
         if (typeof result.value === "string") {
           console.log(source_default.green(`'${result.value}'`));
@@ -1710,7 +1711,7 @@ async function repl(arg) {
       } else {
         console.log();
       }
-    })();
+    }
   }
 }
 var file = process.argv[2] && !process.argv[2].startsWith("-") && process.argv[2];
