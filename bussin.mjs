@@ -777,7 +777,7 @@ getSTDIN.open = function open() {
 };
 var stdin_default = getSTDIN;
 
-// node_modules/chalk/source/vendor/ansi-styles/index.js
+// /Users/orisarfati/node_modules/chalk/source/vendor/ansi-styles/index.js
 var assembleStyles = function() {
   const codes = new Map;
   for (const [groupName, group] of Object.entries(styles)) {
@@ -954,7 +954,7 @@ var colorNames = [...foregroundColorNames, ...backgroundColorNames];
 var ansiStyles = assembleStyles();
 var ansi_styles_default = ansiStyles;
 
-// node_modules/chalk/source/vendor/supports-color/index.js
+// /Users/orisarfati/node_modules/chalk/source/vendor/supports-color/index.js
 import process2 from "node:process";
 import os from "node:os";
 import tty from "node:tty";
@@ -1080,7 +1080,7 @@ var supportsColor = {
 };
 var supports_color_default = supportsColor;
 
-// node_modules/chalk/source/utilities.js
+// /Users/orisarfati/node_modules/chalk/source/utilities.js
 function stringReplaceAll(string, substring, replacer) {
   let index = string.indexOf(substring);
   if (index === -1) {
@@ -1110,7 +1110,7 @@ function stringEncaseCRLFWithFirstIndex(string, prefix, postfix, index) {
   return returnValue;
 }
 
-// node_modules/chalk/source/index.js
+// /Users/orisarfati/node_modules/chalk/source/index.js
 var createChalk = function(options) {
   return chalkFactory(options);
 };
@@ -1661,7 +1661,9 @@ async function run(filename) {
   return result;
 }
 async function repl(arg) {
-  await fetch("https://8.8.8.8");
+  if (typeof globalThis.Deno === "undefined" && typeof globalThis.Bun === "undefined") {
+    await fetch("https://8.8.8.8");
+  }
   const parser2 = new Parser;
   const env2 = createGlobalEnv();
   console.log("Repl v1.0 (Bussin)");
