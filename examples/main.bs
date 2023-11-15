@@ -49,5 +49,5 @@ try {
 
     println(res)
 } catch {
-    println(error, "User is running Windows/Macos")
+    error("User is running Windows")
 }
