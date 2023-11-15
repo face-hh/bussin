@@ -1,4 +1,4 @@
-import * as readline from 'readline/promises';
+import * as readline from 'node:readline/promises';
 
 class Manager {
     rl?: readline.Interface
