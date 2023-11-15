@@ -1,4 +1,4 @@
-import getLocalCurrency from "./currency.ts"
+import getLocalCurrency from "./currency"
 
 // fuck off typescript
 declare global {
@@ -44,6 +44,8 @@ export async function transcribe(code: string, bsx: boolean) {
             .replace_fr("plus", "+")
             .replace_fr("times", "*")
             .replace_fr("divided by", "/")
+            .replace_fr("yeet", "throw")
+            .replace_fr("rizz", "error")
             .replace(/\: number/g, '')
             .replace(/\: string/g, '')
             .replace(/\: object/g, '')
