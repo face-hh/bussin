@@ -1,5 +1,5 @@
 {
-
+  "version": "1.1.0",
   "scripts": {
 
     "bussin": "npx ts-node src/main.ts"
@@ -22,7 +22,9 @@
 
     "ip2location-nodejs": "^9.6.0",
 
-    "js-user-country": "^1.0.1"
+    "js-user-country": "^1.0.1",
+
+    "readline-sync": "^1.4.10"
 
   }
 

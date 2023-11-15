@@ -68,6 +68,7 @@ export async function transcribe(code: string) {
         .replace_fr("fuck_around", 'try')
         .replace_fr("find_out", 'catch')
         .replace_fr("clapback", 'exec')
+        .replace_fr("yap", 'input')
         .replace(/\: number/g, '')
         .replace(/\: string/g, '')
         .replace(/\: object/g, '')

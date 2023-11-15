@@ -78,7 +78,7 @@ export function eval_for_statement(declaration: ForStatement, env: Environment):
 
     do {
         eval_assignment(update, env);
-        eval_body(body, env, false);
+        eval_body(body, new Environment(env), false);
 
         test = evaluate(declaration.test, env);
     } while ((test as BooleanVal).value);

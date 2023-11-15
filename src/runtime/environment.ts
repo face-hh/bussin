@@ -1,4 +1,5 @@
 import { exec, execSync } from 'child_process';
+const rl = require('readline-sync')
 
 import { Identifier, MemberExpr } from '../frontend/ast';
 import { printValues } from './eval/native-fns';
@@ -29,6 +30,21 @@ export function createGlobalEnv(): Environment {
             throw error;
         }
     }), true)
+
+    env.declareVar("input", MK_NATIVE_FN((args) => {
+        const cmd = (args[0] as StringVal).value;
+    
+        try {
+            const result = rl.question(cmd);
+            if (result !== null) {
+                return MK_STRING(result);
+            } else {
+                return MK_NULL();
+            }
+        } catch (error) {
+            throw error;
+        }
+    }), true);
 
     env.declareVar("math", MK_OBJECT(
         new Map()

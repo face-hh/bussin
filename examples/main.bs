@@ -51,3 +51,21 @@ try {
 } catch {
     println(error, "User is running Windows/Macos")
 }
+
+let run = true;
+
+for(let i = 0; run == true; i = i + 1){
+    let move = input("Choose between W and A and press Enter > ");
+
+    if(move == "w"){
+        println("You chose W")
+    } else if(move == "a") {
+        println("You chose A")
+    } else {
+        println("Listen to what I tell you bruh")
+    }
+
+    if(i == 10) {
+        run = false;
+    }
+}
