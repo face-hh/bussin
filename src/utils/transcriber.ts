@@ -46,8 +46,8 @@ export async function transcribe(code: string) {
     const currency = await get_currency();
 
     return code
-        .replace_fr("rn", ';')
         .replace_fr(";", '!')
+        .replace_fr("rn", ';')
         .replace_fr("be", '=')
         .replace_fr("lit", 'let')
         .replace_fr("mf", 'const')
