@@ -50,6 +50,7 @@ export async function transcribe(code: string, bsx: boolean) {
             .replace(/\: string/g, '')
             .replace(/\: object/g, '')
             .replace(/\: boolean/g, '')
+            .replace(/[a-zA-Z].\.{2,}[a-zA-Z]/g, "")
             .replace(new RegExp(`${currency}{}`), '${}')
             .replace(new RegExp(`{}${currency}`), '${}')
     } else {
@@ -58,6 +59,7 @@ export async function transcribe(code: string, bsx: boolean) {
             .replace(/\: string/g, '')
             .replace(/\: object/g, '')
             .replace(/\: boolean/g, '')
+            .replace(/[a-zA-Z].\.{2,}[a-zA-Z]/g, "")
             .replace(new RegExp(`${currency}{}`), '${}')
             .replace(new RegExp(`{}${currency}`), '${}')
     }
