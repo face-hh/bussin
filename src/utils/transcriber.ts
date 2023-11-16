@@ -49,6 +49,7 @@ export async function transcribe(code: string) {
         .replace_fr(";", '!')
         .replace_fr("rn", ';')
         .replace_fr("be", '=')
+        .replace_fr("fake", 'null')
         .replace_fr("lit", 'let')
         .replace_fr("mf", 'const')
         .replace_fr("waffle", 'println')
