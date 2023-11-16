@@ -25,7 +25,7 @@ async function run(filename: string) {
 
     let input = readFileSync(filename, 'utf-8');
 
-    if (filename.includes('.bsx')) input = await transcribe(input);
+    if (filename.endsWith('.bsx')) input = await transcribe(input);
 
     const program = parser.produceAST(input);
     const result = evaluate(program, env);
