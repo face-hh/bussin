@@ -68,9 +68,9 @@ lit run be nocap rn
 yall(lit i be 0 rn run be nocap rn i be i + 1){
     lit move be yap("Choose between W and A and press Enter > ") rn
 
-    sus(move be "w"){
+    sus(move fr "w"){
         waffle("You chose W")
-    } impostor sus(move be "a") {
+    } impostor sus(move fr "a") {
         waffle("You chose A")
     } impostor {
         waffle("I FUCKING TOLD YOU WHAT TO DO MORON")
