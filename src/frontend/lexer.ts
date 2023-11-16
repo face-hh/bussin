@@ -69,8 +69,11 @@ function token(value = "", type: TokenType): Token {
 /**
  * Returns whether the character passed in alphabetic -> [a-zA-Z] and _
  */
-function isalpha(src: string) {
-    return /^[A-Za-z_]+$/.test(src);
+function isalpha(src: string, isFirstChar: boolean = false) {
+    if (isFirstChar) {
+        return /^[A-Za-z_]+$/.test(src);
+    }
+    return /^[A-Za-z0-9_]+$/.test(src);
 }
 
 /**
@@ -205,37 +208,40 @@ export function tokenize(sourceCode: string): Token[] {
                             // append new string token.
                             tokens.push(token(str, TokenType.String));
                             break;
-                        default:
-                            if (isalpha(src[0])) {
-                                let ident = "";
-                                while (src.length > 0 && isalpha(src[0])) {
-                                    ident += src.shift();
-                                }
-                    
-                                // CHECK FOR RESERVED KEYWORDS
-                                const reserved = KEYWORDS[ident];
-                                // If value is not undefined then the identifier is
-                                // reconized keyword
-                                if (typeof reserved == "number") {
-                                    tokens.push(token(ident, reserved));
-                                } else {
-                                    // Unreconized name must mean user defined symbol.
-                                    tokens.push(token(ident, TokenType.Identifier));
-                                }
-                            } else if (isskippable(src[0])) {
-                                // Skip uneeded chars.
-                                src.shift();
-                            } // Handle unreconized characters.
-                            // TODO: Impliment better errors and error recovery.
-                            else {
-                                console.error(
-                                    "Unreconized character found in source: ",
-                                    src[0].charCodeAt(0),
-                                    src[0]
-                                );
-                                process.exit(1);
+                    default:
+                        if (isalpha(src[0], true)) {
+                            let ident = "";
+                              ident += src.shift();  // Add first character which is alphabetic or underscore
+                        
+                              while (src.length > 0 && isalpha(src[0])) {
+                                ident += src.shift();  // Subsequent characters can be alphanumeric or underscore
                             }
-                            break;
+                            
+                            // CHECK FOR RESERVED KEYWORDS
+                              const reserved = KEYWORDS[ident];
+                              // If value is not undefined then the identifier is
+                                // recognized keyword
+                            if (typeof reserved == "number") {
+                                tokens.push(token(ident, reserved));
+                            } else {
+                                // Unrecognized name must mean user-defined symbol.
+                                tokens.push(token(ident, TokenType.Identifier));
+                               }
+                           } else if (isskippable(src[0])) {
+                             // Skip unneeded chars.
+                              src.shift();
+                          } else {
+                              // Handle unrecognized characters.
+                               // TODO: Implement better errors and error recovery.
+
+                            console.error(
+                                "Unrecognized character found in source: ",
+                                src[0].charCodeAt(0),
+                                src[0]
+                               );
+                            process.exit(1);
+                        }
+                         break;
                     }
                 }
                 break;
