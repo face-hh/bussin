@@ -131,12 +131,10 @@ export function tokenize(sourceCode: string): Token[] {
     while (src.length > 0) {
 
         const char = src[0];
-       
+
         const tokenType = TOKEN_CHARS[char];
-        if(tokenType) {
-            tokens.push(token(src.shift(), tokenType));
-        } else if (isint(char)) {
-            let num = "";
+        if (isint(char) || (char == "-" && isint(src[1]))) {
+            let num = src.shift();
             let period = false;
             while (src.length > 0) {
                 if(src[0] == "." && !period) {
@@ -149,6 +147,8 @@ export function tokenize(sourceCode: string): Token[] {
 
             // append new numeric token.
             tokens.push(token(num, TokenType.Number));
+        } else if(tokenType) {
+            tokens.push(token(src.shift(), tokenType));
         } else {
 
             switch(char) {
