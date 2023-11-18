@@ -131,99 +131,97 @@ export function tokenize(sourceCode: string): Token[] {
     while (src.length > 0) {
 
         const char = src[0];
-
+       
         const tokenType = TOKEN_CHARS[char];
         if(tokenType) {
             tokens.push(token(src.shift(), tokenType));
-        } else {
-        
-            if (isint(char)) {
-                let num = "";
-                while (src.length > 0 && isint(char)) {
-                    num += src.shift();
-                }
-    
-                // append new numeric token.
-                tokens.push(token(num, TokenType.Number));
-            } else {
-
-                switch(char) {
-                    case "=":
-                        src.shift()
-                        if (src[0] == '=') {
-                            src.shift()
-                            tokens.push(token('==', TokenType.EqualsCompare));
-                        } else {
-                            tokens.push(token("=", TokenType.Equals));
-                        }
-                    case "&":
-                        src.shift()
-                        if (src[0] == '&') {
-                            src.shift()
-                            tokens.push(token('&&', TokenType.And));
-                        } else {
-                            tokens.push(token("&", TokenType.Ampersand));
-                        }
-                        break;
-                    case "!":
-                        src.shift();
-                        if (String(src[0]) == '=') {
-                            src.shift()
-                            tokens.push(token("!=", TokenType.NotEqualsCompare));
-                        } else {
-                            tokens.push(token("!", TokenType.Exclamation));
-                        }
-                        break;
-                    case '"':
-                        let str = "";
-                        src.shift();
-            
-                        while (src.length > 0 && src[0] !== '"') {
-                            str += src.shift();
-                        }
-            
-                        src.shift();
-            
-                        // append new string token.
-                        tokens.push(token(str, TokenType.String));
-                        break;
-                    default:
-                        if (isalpha(char, true)) {
-                            let ident = "";
-                            ident += src.shift();  // Add first character which is alphabetic or underscore
-                        
-                            while (src.length > 0 && isalpha(src[0])) {
-                                ident += src.shift();  // Subsequent characters can be alphanumeric or underscore
-                            }
-                            
-                            // CHECK FOR RESERVED KEYWORDS
-                            const reserved = KEYWORDS[ident];
-                            // If value is not undefined then the identifier is
-                            // recognized keyword
-                            if (typeof reserved == "number") {
-                                tokens.push(token(ident, reserved));
-                            } else {
-                                // Unrecognized name must mean user-defined symbol.
-                                tokens.push(token(ident, TokenType.Identifier));
-                            }
-                        } else if (isskippable(src[0])) {
-                            // Skip unneeded chars.
-                            src.shift();
-                        } else {
-                            // Handle unrecognized characters.
-                            // TODO: Implement better errors and error recovery.
-
-                            console.error(
-                                "Unrecognized character found in source: ",
-                                src[0].charCodeAt(0),
-                                src[0]
-                            );
-                            process.exit(1);
-                        }
-                        break;
-                }
+        } else if (isint(char)) {
+            let num = "";
+            while (src.length > 0 && isint(char)) {
+                num += src.shift();
             }
-            break;
+
+            // append new numeric token.
+            tokens.push(token(num, TokenType.Number));
+        } else {
+
+            switch(char) {
+                case "=":
+                    src.shift()
+                    if (src[0] == '=') {
+                        src.shift()
+                        tokens.push(token('==', TokenType.EqualsCompare));
+                    } else {
+                        tokens.push(token("=", TokenType.Equals));
+                    }
+                    break;
+                case "&":
+                    src.shift()
+                    if (src[0] == '&') {
+                        src.shift()
+                        tokens.push(token('&&', TokenType.And));
+                    } else {
+                        tokens.push(token("&", TokenType.Ampersand));
+                    }
+                    break;
+                case "!":
+                    src.shift();
+                    if (String(src[0]) == '=') {
+                        src.shift()
+                        tokens.push(token("!=", TokenType.NotEqualsCompare));
+                    } else {
+                        tokens.push(token("!", TokenType.Exclamation));
+                    }
+                    break;
+                case '"':
+                    let str = "";
+                    src.shift();
+        
+                    while (src.length > 0 && src[0] !== '"') {
+                        str += src.shift();
+                    }
+        
+                    src.shift();
+        
+                    // append new string token.
+                    tokens.push(token(str, TokenType.String));
+                    break;
+                default:
+
+                    if (isalpha(char, true)) {
+                        let ident = "";
+                        ident += src.shift();  // Add first character which is alphabetic or underscore
+                    
+                        while (src.length > 0 && isalpha(src[0])) {
+                            ident += src.shift();  // Subsequent characters can be alphanumeric or underscore
+                        }
+                        
+                        // CHECK FOR RESERVED KEYWORDS
+                        const reserved = KEYWORDS[ident];
+                        // If value is not undefined then the identifier is
+                        // recognized keyword
+                        if (typeof reserved == "number") {
+                            tokens.push(token(ident, reserved));
+                        } else {
+                            // Unrecognized name must mean user-defined symbol.
+                            tokens.push(token(ident, TokenType.Identifier));
+                        }
+                    } else if (isskippable(src[0])) {
+                        // Skip unneeded chars.
+                        src.shift();
+                    } else {
+                        // Handle unrecognized characters.
+                        // TODO: Implement better errors and error recovery.
+
+                        console.error(
+                            "Unrecognized character found in source: ",
+                            src[0].charCodeAt(0),
+                            src[0]
+                        );
+                        process.exit(1);
+                    }
+                    break;
+            }
         }
     }
 
