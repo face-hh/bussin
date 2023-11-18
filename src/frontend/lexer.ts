@@ -137,8 +137,14 @@ export function tokenize(sourceCode: string): Token[] {
             tokens.push(token(src.shift(), tokenType));
         } else if (isint(char)) {
             let num = "";
-            while (src.length > 0 && isint(char)) {
-                num += src.shift();
+            let period = false;
+            while (src.length > 0) {
+                if(src[0] == "." && !period) {
+                    period = true;
+                    num += src.shift();
+                } else if (isint(src[0])) {
+                    num += src.shift();
+                } else break;
             }
 
             // append new numeric token.
