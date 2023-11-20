@@ -72,6 +72,8 @@ export async function transcribe(code: string) {
         .replace_fr("yap", 'input')
         .replace_fr("minus", "-")
         .replace_fr("plus", "+")
+        .replace_fr("minusminus", "--")
+        .replace_fr("plusplus", "++")
         .replace_fr("times", "*")
         .replace_fr("divided by", "/")
         .replace(/\: number/g, '')
