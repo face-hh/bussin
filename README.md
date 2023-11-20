@@ -60,7 +60,6 @@ lit x be 34 rn
 lit y be 12 rn
 lit z be x - y rn
 ```
-**Note**: We, at Bussin X, believe decimals are redundant. You can only use positive values too.
 
 ### Null
 ```rs
