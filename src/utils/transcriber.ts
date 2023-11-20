@@ -53,6 +53,7 @@ export async function transcribe(code: string) {
         .replace_fr("mf", 'const')
         .replace_fr("waffle", 'println')
         .replace_fr("sus", 'if')
+        .replace_fr("fake", 'null')
         .replace_fr("impostor", 'else')
         .replace_fr("nah", '!=')
         .replace_fr("fr", '==')

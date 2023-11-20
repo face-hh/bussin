@@ -45,7 +45,7 @@ export function eval_numeric_binary_expr(lhs: RuntimeVal, rhs: RuntimeVal, opera
 
 function equals(lhs: RuntimeVal, rhs: RuntimeVal, strict: boolean): RuntimeVal {
     const compare = strict ? (a: any, b: any) => a === b : (a: any, b: any) => a !== b;
-console.log(lhs, rhs, lhs === rhs, compare((lhs as StringVal).value, (rhs as StringVal).value))
+
     switch (lhs.type) {
         case 'boolean':
             return MK_BOOL(compare((lhs as BooleanVal).value, (rhs as BooleanVal).value));
@@ -62,7 +62,7 @@ console.log(lhs, rhs, lhs === rhs, compare((lhs as StringVal).value, (rhs as Str
         case 'object':
             return MK_BOOL(compare((lhs as ObjectVal).properties, (rhs as ObjectVal).properties));
         default:
-            throw `Unhandled type in: ${lhs}, ${rhs}`
+            throw `RunTime: Unhandled type in equals function: ${lhs}, ${rhs}`
     }
 }
 

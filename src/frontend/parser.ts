@@ -59,7 +59,7 @@ export default class Parser {
     }
 
     parse_block_statement(): Stmt[] {
-        this.expect(TokenType.OpenBrace, "Opening brace expected.");
+        this.expect(TokenType.OpenBrace, "Opening brace (\"{\") expected while parsing code block.");
 
         const body: Stmt[] = [];
 
@@ -68,22 +68,22 @@ export default class Parser {
             body.push(stmt);
         }
 
-        this.expect(TokenType.CloseBrace, "Closing brace expected.");
+        this.expect(TokenType.CloseBrace, "Closing brace (\"}\") expected while parsing code block.");
 
         return body;
     }
 
     parse_for_statement(): Stmt {
         this.eat(); // eat "for" keyword
-        this.expect(TokenType.OpenParen, "Expected opening parenthesis in while.");
+        this.expect(TokenType.OpenParen, "Opening parenthesis (\"(\") expected following \"for\" statement.");
         const init = this.parse_var_declaration();
         const test = this.parse_expr();
 
-        this.expect(TokenType.Semicolon, "Expected semicolon following test expression in for statement");
+        this.expect(TokenType.Semicolon, "Semicolon (\";\") expected following \"test expression\" in \"for\" statement.");
 
         const update = this.parse_assignment_expr();
 
-        this.expect(TokenType.CloseParen, "Expected closing paranthesis following additive expression in for statement");
+        this.expect(TokenType.CloseParen, "Closing parenthesis (\"(\") expected following \"additive expression\" in \"for\" statement.");
 
         const body = this.parse_block_statement();
 
@@ -97,11 +97,11 @@ export default class Parser {
     }
     parse_if_statement(): Stmt {
         this.eat(); // eat if keyword
-        this.expect(TokenType.OpenParen, "Expected opening parenthesis following if keyword");
+        this.expect(TokenType.OpenParen, "Opening parenthesis (\"(\") expected following \"if\" statement.");
 
         const test = this.parse_expr();
 
-        this.expect(TokenType.CloseParen, "Expected closing parenthesis following if keyword");
+        this.expect(TokenType.CloseParen, "Closing parenthesis (\"(\") expected following \"if\" statement.");
 
         const body = this.parse_block_statement();
 
@@ -127,14 +127,14 @@ export default class Parser {
 
     parse_function_declaration(): Stmt {
         this.eat(); // eat fn keyword
-        const name = this.expect(TokenType.Identifier, "Expected function name following fn keyword").value;
+        const name = this.expect(TokenType.Identifier, "Function name expected following \"fn\" statement.").value;
 
         const args = this.parse_args();
         const params: string[] = [];
 
         for (const arg of args) {
             if (arg.kind !== "Identifier") {
-                throw "Inside function declaration expected parameters to be of type String"
+                throw "Arguments for \"fn\" statement must be of type \"String\"."
             }
 
             params.push((arg as Identifier).symbol);
@@ -151,24 +151,24 @@ export default class Parser {
 
     parse_var_declaration(): Stmt {
         const isConstant = this.eat().type == TokenType.Const;
-        const identifier = this.expect(TokenType.Identifier, "Expected identifier name following let/const keywords.").value;
+        const identifier = this.expect(TokenType.Identifier, "Variable name expected following \"let\"/\"const\" statement.").value;
 
         if (this.at().type == TokenType.Semicolon) {
             this.eat() // expect semicolon
 
             if (isConstant)
-                throw "Must assign value to constant expression. No value provided."
+                throw "Constant variables must have assigned values."
 
             return { kind: "VarDeclaration", identifier, constant: false, value: undefined } as VarDeclaration;
         }
 
-        this.expect(TokenType.Equals, "Expected equals token following identifier in var declaration.");
+        this.expect(TokenType.Equals, "Equals (\"=\") expected following \"identifier\" declaration in \"let\"/\"const\" statement.");
 
         const declaration = { kind: "VarDeclaration", value: this.parse_expr(), constant: isConstant, identifier } as VarDeclaration;
 
         if (this.at().type == TokenType.String) this.eat(); // eaat the " at the end
 
-        this.expect(TokenType.Semicolon, "Variable declaration statement must end in semicolon (\";\")");
+        this.expect(TokenType.Semicolon, "Semicolon (\";\") expected at the end of \"let\"/\"const\" statement.");
 
         return declaration;
     }
@@ -215,7 +215,7 @@ export default class Parser {
 
         const body = this.parse_block_statement();
 
-        if (this.at().value !== 'catch') throw `Try statement must include a catch statement.`
+        if (this.at().value !== 'catch') throw "\"try\" statement must be followed by a \"catch\" statement."
 
         this.eat();
 
@@ -238,7 +238,7 @@ export default class Parser {
 
         while (this.not_eof() && this.at().type != TokenType.CloseBrace) {
             // { key: val, key2: val }
-            const key = this.expect(TokenType.Identifier, "Object literal missing key.").value;
+            const key = this.expect(TokenType.Identifier, "Identifier expected following \"Object\" expression.").value;
 
             // Allows shorthand key: pair -> { key, }
             if (this.at().type == TokenType.Comma) {
@@ -252,17 +252,17 @@ export default class Parser {
             }
             // { key: val }
 
-            this.expect(TokenType.Colon, "Missing colon following identifier in object expression. (\",\")");
+            this.expect(TokenType.Colon, "Semicolon (\";\") expected following \"identifier\" in \"Object\" expression.");
             const value = this.parse_expr();
 
             properties.push({ key, value, kind: "Property" });
 
             if (this.at().type != TokenType.CloseBrace) {
-                this.expect(TokenType.Comma, "Expected comma or closing brace following property");
+                this.expect(TokenType.Comma, "Comma (\";\") or closing brace (\"}\") expected after \"property\" declaration.");
             }
         }
 
-        this.expect(TokenType.CloseBrace, "Object literal missing closed brace. (\"}\")")
+        this.expect(TokenType.CloseBrace, "Closing brace (\"}\") expected at the end of \"Object\" expression.")
         return { kind: "ObjectLiteral", properties } as ObjectLiteral;
     }
 
@@ -322,12 +322,12 @@ export default class Parser {
     }
 
     private parse_args(): Expr[] {
-        this.expect(TokenType.OpenParen, "Expected open parenthesis");
+        this.expect(TokenType.OpenParen, "Opening parenthesis (\"(\") expected while parsing arguments.");
         const args = this.at().type == TokenType.CloseParen
             ? []
             : this.parse_args_list();
 
-        this.expect(TokenType.CloseParen, "Missing closing parenthesis inside args list");
+        this.expect(TokenType.CloseParen, "Closing parenthesis (\")\") expected while parsing arguments.");
 
         return args;
     }
@@ -358,14 +358,14 @@ export default class Parser {
                 property = this.parse_primary_expr();
 
                 if (property.kind !== "Identifier") {
-                    throw `Cannot use dot operator without right hand side being an identifier`
+                    throw "Dot operator (\".\") is illegal without right-hand-side (<-) being an Identifier."
                 }
             } // computed values (obj[computedVal])
             else {
                 computed = true;
                 property = this.parse_expr();
 
-                this.expect(TokenType.CloseBracket, "Missing closing bracket in computed value.");
+                this.expect(TokenType.CloseBracket, "Closing bracket (\"}\") expected following \"computed value\" in \"Member\" expression.");
             }
 
             object = {
@@ -406,7 +406,8 @@ export default class Parser {
             case TokenType.OpenParen:
                 this.eat(); // eat the opening paren
                 const value = this.parse_expr();
-                this.expect(TokenType.CloseParen, "Unexpected token inside () expr. Expected \")\""); // closing paren
+
+                this.expect(TokenType.CloseParen, "Unexpected token (?) found while parsing arguments."); // closing paren
 
                 return value;
             default:

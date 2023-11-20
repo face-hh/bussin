@@ -14,6 +14,11 @@ We, at Bussin, believe everyone should be entertained while coding. Meet our alt
 
 Inside **Bussin X**, you *can* use BS syntax, however, it's recommended to use the **BSX** syntax described below. 
 
+### New!
+- `lit n be fake rn` will create `n` as `null`.
+- Object property setting is fixed! `lit obj be {} rn obj.e = nocap waffle(obj)`
+- Better error messages
+
 ## Variables
 Mutable variables are created with:
 ```rs
@@ -56,6 +61,11 @@ lit y be 12 rn
 lit z be x - y rn
 ```
 **Note**: We, at Bussin X, believe decimals are redundant. You can only use positive values too.
+
+### Null
+```rs
+lit abc be fake rn
+```
 
 ### Booleans
 Booleans are also simple:

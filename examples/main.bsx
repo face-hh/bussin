@@ -7,6 +7,9 @@ waffle(y)
 lit a be cap rn
 waffle(y)
 
+lit abc be fake rn
+waffle(abc)
+
 sus (y fr 1){
     waffle("Y is 1")
 } impostor sus (n nah 2){

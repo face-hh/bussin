@@ -4,6 +4,12 @@ println(x)
 let y = 1;
 println(y)
 
+let a = true;
+println(a)
+
+let abc = null;
+println(abc)
+
 if (y == 1){
     println("Y is 1")
 } else if (n != 2){

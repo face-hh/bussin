@@ -33,7 +33,7 @@ export function createGlobalEnv(): Environment {
 
     env.declareVar("input", MK_NATIVE_FN((args) => {
         const cmd = (args[0] as StringVal).value;
-    
+
         try {
             const result = rl.question(cmd);
             if (result !== null) {
@@ -162,9 +162,9 @@ export default class Environment {
             : (expr.property as Identifier).symbol;
         const currentProp = (expr.property as Identifier).symbol;
 
-        if (currentProp) pastVal = (pastVal.properties.get(currentProp) as ObjectVal);
-
         if (value) pastVal.properties.set(prop, value);
+
+        if (currentProp) pastVal = (pastVal.properties.get(currentProp) as ObjectVal);
 
         return pastVal;
     }

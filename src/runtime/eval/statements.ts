@@ -35,7 +35,7 @@ export function eval_function_declaration(declaration: FunctionDeclaration, env:
 
 export function eval_if_statement(declaration: IfStatement, env: Environment): RuntimeVal {
     const test = evaluate(declaration.test, env);
-console.log(test)
+
     if ((test as BooleanVal).value === true) {
         return eval_body(declaration.body, env);
     } else if (declaration.alternate) {
