@@ -211,7 +211,7 @@ fuck_around {
 lit x be yap("watcho name > ") rn
 waffle(x)
 ```
-**Note**: The user won't see the text he types, but you will successfully receive the text after the user presses Enter.
+**Note**: The user won't see the text they type, but you will successfully receive the text after the user presses Enter.
 
 # Credits
 - Huge thanks to [Tyler Laceby](https://github.com/tlaceby) for creating the [Guide to Interpreters](https://github.com/tlaceby/guide-to-interpreters-series)!
