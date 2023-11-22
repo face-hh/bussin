@@ -105,7 +105,7 @@ export default class Parser {
 
         const body = this.parse_block_statement();
 
-        let alternate: Stmt[];
+        let alternate: Stmt[] = [];
 
         if (this.at().type == TokenType.Else) {
             this.eat(); // eat "else"

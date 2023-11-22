@@ -7,6 +7,9 @@ import { eval_identifier, eval_binary_expr, eval_assignment, eval_object_expr, e
 
 export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
     switch (astNode.kind) {
+
+        case "Program":
+            return eval_program(astNode as Program, env);
         case "NumericLiteral":
             return { value: ((astNode as NumericLiteral).value), type: "number" } as NumberVal;
         case "StringLiteral":
@@ -21,14 +24,12 @@ export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
             return eval_assignment(astNode as AssignmentExpr, env);
         case "BinaryExpr":
             return eval_binary_expr(astNode as BinaryExpr, env);
-        case "Program":
-            return eval_program(astNode as Program, env);
         case "IfStatement":
             return eval_if_statement(astNode as IfStatement, env);
         case "ForStatement":
             return eval_for_statement(astNode as ForStatement, env);
         case "MemberExpr":
-            return eval_member_expr(env, null, astNode as MemberExpr);
+            return eval_member_expr(env, undefined, astNode as MemberExpr);
         case "TryCatchStatement":
             return eval_try_catch_statement(env, astNode as TryCatchStatement);
 

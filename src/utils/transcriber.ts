@@ -20,7 +20,7 @@ interface Currency {
 }
 
 String.prototype.replace_fr = function (target: string, replacement: string): string {
-    const pattern = new RegExp('(?<![\'"`])\\b' + target + '\\b(?!["\'`])', 'g');
+    const pattern = new RegExp(`\\b${target}\\b(?=(?:(?:[^"]*"){2})*[^"]*$)`, 'g');
     
     return this.replace(pattern, replacement);
 }
@@ -70,6 +70,12 @@ export async function transcribe(code: string) {
         .replace_fr("find_out", 'catch')
         .replace_fr("clapback", 'exec')
         .replace_fr("yap", 'input')
+        .replace_fr("minus", "-")
+        .replace_fr("plus", "+")
+        .replace_fr("minusminus", "--")
+        .replace_fr("plusplus", "++")
+        .replace_fr("times", "*")
+        .replace_fr("divided by", "/")
         .replace(/\: number/g, '')
         .replace(/\: string/g, '')
         .replace(/\: object/g, '')

@@ -58,9 +58,8 @@ Numbers are simple:
 ```rs
 lit x be 34 rn
 lit y be 12 rn
-lit z be x - y rn
+lit z be x minus y rn
 ```
-**Note**: We, at Bussin X, believe decimals are redundant. You can only use positive values too.
 
 ### Null
 ```rs
@@ -92,14 +91,14 @@ We, at Bussin X, believe comments are redundant. Code must be understandable wit
 Functions in programming are intricate entities that serve as modular units of code designed to perform specific tasks with a high degree of abstraction and reusability. These multifaceted constructs encapsulate a series of instructions, often comprising algorithmic operations and logical conditions, which execute a well-defined purpose within a larger program. Functionality is delineated through a meticulously crafted signature, encompassing parameters and return types, allowing for parameterization and value transmission between the calling code and the function body. The complexity further burgeons as functions may exhibit a plethora of characteristics, including but not limited to recursion, closures, and the ability to manipulate variables within their designated scopes. Their utility extends beyond mere procedural decomposition, often intertwining with the paradigms of object-oriented, functional, or imperative programming, depending on the programming language employed. The orchestration of functions, with their nuanced interplay, results in the orchestration of intricate software systems, promoting maintainability, readability, and the efficient allocation of computational resources. In essence, functions epitomize the sophisticated essence of programming, embodying the elegance and subtlety required to navigate the intricacies of algorithmic design and software engineering. You can create functions by using:
 ```rs
 bruh perform(x, y) {
-    x - y
+    x minus y
 }
 ```
 We, at Bussin X, think `return` statements are redundant. Instead, our superior functions return the last value emitted.
 ```rs
 bruh perform(x, y) {
-    x + y // will do nothing
-    x - y
+    x plus y // will do nothing
+    x minus y
 }
 ```
 
@@ -122,7 +121,7 @@ sus (1 fr 1){
 ## Loops
 Loops in Bussin X are very easy:
 ```rs
-yall(lit i be 0 rn i smol 10 rn i be i + 1){}
+yall(lit i be 0 rn i smol 10 rn i plusplus){}
 ```
 Because we, at Bussin X, believe programmers should be responsible for their code, we did not add any `break` or `continue` keyword functionality to loops.
 
@@ -145,7 +144,7 @@ lit x: number: number: object: string be 3 rn
 ```
 In fact, you can use types anywhere!
 ```rs
-yall: number(lit: object i: number be 0: object rn i smol 10 rn i be i + 1){
+yall: number(lit: object i: number be 0: object rn i smol 10 rn i plusplus){
     waffle(strcon("Currently at ", i): object)
 }: object: object: string
 ```
@@ -156,7 +155,7 @@ yall: number(lit: object i: number be 0: object rn i smol 10 rn i be i + 1){
 Bussin X also supports `try` `catch` statements:
 ```rs
 fuck_around {
-    waffle(null + hogrider)
+    waffle(null plus hogrider)
 } find_out {
     waffle(error)
 }
@@ -175,7 +174,7 @@ waffle(nerd.random())
 waffle(nerd.sqrt(144))
 waffle(nerd.pi)
 ```
-Even though Bussin X doesn't support negative (-) or decimal (.) numbers, we added helper functions for your anxiety:
+We also added helper functions for your anxiety:
 ```rs
 waffle(nerd.ceil(3.4))
 waffle(nerd.round(3.9))

@@ -139,16 +139,14 @@ export function tokenize(sourceCode: string): Token[] {
             while (src.length > 0) {
                 if(src[0] == "." && !period) {
                     period = true;
-                    num += src.shift();
+                    num += src.shift()!;
                 } else if (isint(src[0])) {
-                    num += src.shift();
+                    num += src.shift()!;
                 } else break;
             }
 
             // append new numeric token.
             tokens.push(token(num, TokenType.Number));
-        } else if(tokenType) {
-            tokens.push(token(src.shift(), tokenType));
         } else {
 
             switch(char) {
@@ -192,9 +190,24 @@ export function tokenize(sourceCode: string): Token[] {
                     // append new string token.
                     tokens.push(token(str, TokenType.String));
                     break;
+                case "-":
+                case "+":
+                    if(src[1] == src[0]) {
+                        const prevtoken = tokens[tokens.length - 1];
+                        if(prevtoken != null) {
+                            tokens.push(token("=", TokenType.Equals));
+                            tokens.push(token(prevtoken.value, prevtoken.type));
+                            tokens.push(token(src.shift(), TokenType.BinaryOperator));
+                            tokens.push(token("1", TokenType.Number));
+                            src.shift();
+                        }
+                        break;
+                    }
                 default:
 
-                    if (isalpha(char, true)) {
+                    if(tokenType) {
+                        tokens.push(token(src.shift(), tokenType));
+                    } else if (isalpha(char, true)) {
                         let ident = "";
                         ident += src.shift();  // Add first character which is alphabetic or underscore
                     
