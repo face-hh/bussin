@@ -31,6 +31,17 @@ export function createGlobalEnv(): Environment {
         }
     }), true)
 
+    env.declareVar("charat", MK_NATIVE_FN((args) => {
+        const str = (args[0] as StringVal).value;
+        const pos = (args[1] as NumberVal).value;
+
+        try {
+            return MK_STRING(str.charAt(pos));
+        } catch (error) {
+            throw error;
+        }
+    }), true);
+
     env.declareVar("input", MK_NATIVE_FN((args) => {
         const cmd = (args[0] as StringVal).value;
 
