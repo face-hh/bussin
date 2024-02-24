@@ -4,6 +4,7 @@ const rl = require('readline-sync')
 import { Identifier, MemberExpr } from '../frontend/ast';
 import { printValues } from './eval/native-fns';
 import { MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal } from "./values";
+import { evaluate } from './interpreter';
 
 export function createGlobalEnv(): Environment {
     const env = new Environment();
@@ -30,6 +31,17 @@ export function createGlobalEnv(): Environment {
             throw error;
         }
     }), true)
+
+    env.declareVar("charat", MK_NATIVE_FN((args) => {
+        const str = (args[0] as StringVal).value;
+        const pos = (args[1] as NumberVal).value;
+
+        try {
+            return MK_STRING(str.charAt(pos));
+        } catch (error) {
+            throw error;
+        }
+    }), true);
 
     env.declareVar("input", MK_NATIVE_FN((args) => {
         const cmd = (args[0] as StringVal).value;
@@ -157,10 +169,10 @@ export default class Environment {
 
         let pastVal = env.variables.get(varname) as ObjectVal;
 
+        const currentProp = (evaluate(expr.property, env) as StringVal).value;
         const prop = property
             ? property.symbol
-            : (expr.property as Identifier).symbol;
-        const currentProp = (expr.property as Identifier).symbol;
+            : currentProp;
 
         if (value) pastVal.properties.set(prop, value);
 

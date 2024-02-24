@@ -4,7 +4,9 @@
     "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "declaration": true, // Generate .d.ts files
+    "outDir": "./dist" // Output directory
   },
   "include": ["src/*", "src/frontend/ast.ts", "src/utils/transcriber.ts"],
   "exclude": ["node_modules"]

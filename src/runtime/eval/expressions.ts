@@ -5,41 +5,37 @@ import { NumberVal, RuntimeVal, MK_NULL, ObjectVal, NativeFnValue, FunctionValue
 
 export function eval_numeric_binary_expr(lhs: RuntimeVal, rhs: RuntimeVal, operator: string): RuntimeVal {
 
-    if (operator === '!=') {
-        return equals(lhs, rhs, false);
-    } else if (operator === '==') {
-        return equals(lhs, rhs, true);
-    } else if (operator === '&&') {
-        return equals(lhs, rhs, true);
-    } else if (operator === '|') {
-        const llhs = lhs as BooleanVal;
-        const rrhs = rhs as BooleanVal;
+    switch(operator) {
+        case "!=":
+            return equals(lhs, rhs, false);
+        case "==":
+            return equals(lhs, rhs, true);
+        case "&&":
+            return equals(lhs, rhs, true);
+        default:
+            if (lhs.type !== 'number' || rhs.type !== 'number') return MK_NULL();
 
-        return MK_BOOL(llhs.value || rrhs.value);
-    } else if (lhs.type === 'number' && rhs.type === 'number') {
-        const llhs = lhs as NumberVal;
-        const rrhs = rhs as NumberVal;
-
-        switch (operator) {
-            case "+":
-                return MK_NUMBER(llhs.value + rrhs.value);
-            case "-":
-                return MK_NUMBER(llhs.value - rrhs.value);
-            case "*":
-                return MK_NUMBER(llhs.value * rrhs.value);
-            case "/":
-                return MK_NUMBER(llhs.value / rrhs.value);
-            case "%":
-                return MK_NUMBER(llhs.value % rrhs.value);
-            case "<":
-                return MK_BOOL(llhs.value < rrhs.value);
-            case ">":
-                return MK_BOOL(llhs.value > rrhs.value);
-            default:
-                throw `Unknown operator provided in operation: ${lhs}, ${rhs}.`
-        }
-    } else {
-        return MK_NULL()
+            const llhs = lhs as NumberVal;
+            const rrhs = rhs as NumberVal;
+    
+            switch (operator) {
+                case "+":
+                    return MK_NUMBER(llhs.value + rrhs.value);
+                case "-":
+                    return MK_NUMBER(llhs.value - rrhs.value);
+                case "*":
+                    return MK_NUMBER(llhs.value * rrhs.value);
+                case "/":
+                    return MK_NUMBER(llhs.value / rrhs.value);
+                case "%":
+                    return MK_NUMBER(llhs.value % rrhs.value);
+                case "<":
+                    return MK_BOOL(llhs.value < rrhs.value);
+                case ">":
+                    return MK_BOOL(llhs.value > rrhs.value);
+                default:
+                    throw `Unknown operator provided in operation: ${lhs}, ${rhs}.`
+            }
     }
 }
 
@@ -145,7 +141,6 @@ export function eval_member_expr(env: Environment, node?: AssignmentExpr, expr?:
         const variable = env.lookupOrMutObject(node.assigne as MemberExpr, evaluate(node.value, env));
 
         return variable;
-    } else {
-        throw `Evaluating a member expression is not possible without a member or assignment expression.`
     }
+    throw `Evaluating a member expression is not possible without a member or assignment expression.`
 }

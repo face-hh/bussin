@@ -1,3 +1,4 @@
 node_modules
 *.bsx
 *.bs
+dist/**
