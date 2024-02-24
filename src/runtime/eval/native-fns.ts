@@ -19,11 +19,11 @@ export function matchType(arg: RuntimeVal) {
         case "null":
             return (arg as NullVal).value;
         case "object":
-            let obj: { [key: string]: any } = {};
+            const obj: { [key: string]: any } = {};
             const aObj = arg as ObjectVal;
             aObj.properties.forEach((value, key) => {
                 obj[key] = matchType(value);
-            })
+            });
 
             return obj;
         case 'fn':
