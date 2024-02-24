@@ -4,7 +4,6 @@ const rl = require('readline-sync')
 import { Identifier, MemberExpr } from '../frontend/ast';
 import { printValues } from './eval/native-fns';
 import { MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal } from "./values";
-import { eval_binary_expr, eval_member_expr, eval_object_expr } from './eval/expressions';
 import { evaluate } from './interpreter';
 
 export function createGlobalEnv(): Environment {
