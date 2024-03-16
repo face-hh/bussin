@@ -101,10 +101,16 @@ bruh perform(x, y) {
     x minus y
 }
 ```
-You can also run the function soon.
+You can also run the function soon:
 ```rs
 soon(bruh perform() {
     waffle("A second later...")
+}, 1000)
+```
+And also can make it run frequently:
+```rs
+frequently(bruh perform() {
+    waffle("Spam!!!")
 }, 1000)
 ```
 

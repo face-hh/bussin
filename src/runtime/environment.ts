@@ -126,12 +126,20 @@ export function createGlobalEnv(): Environment {
         const time = args.shift() as NumberVal;
         timeoutDepth++;
         setTimeout(() => {
-            eval_function(func, []); // No args can be present here, as none are given.
+            eval_function(func, []); // No args can be present here, as none are able to be given.
             timeoutDepth--;
             if(timeoutDepth == 0 && shouldExit) {
                 process.exit();
             }
         }, time.value);
+        return MK_NULL();
+    }), true);
+
+    env.declareVar("setInterval", MK_NATIVE_FN((args) => {
+        const func = args.shift() as FunctionValue;
+        const time = args.shift() as NumberVal;
+        timeoutDepth = Infinity; // Intervals won't end so...
+        setInterval(() => eval_function(func, []), time.value); // No args can be present here, as none are able to be given.
         return MK_NULL();
     }), true);
 
