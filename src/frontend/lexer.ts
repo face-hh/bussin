@@ -194,13 +194,26 @@ export function tokenize(sourceCode: string): Token[] {
                 case "+":
                     if(src[1] == src[0]) {
                         const prevtoken = tokens[tokens.length - 1];
-                        if(prevtoken != null) {
-                            tokens.push(token("=", TokenType.Equals));
-                            tokens.push(token(prevtoken.value, prevtoken.type));
-                            tokens.push(token(src.shift(), TokenType.BinaryOperator));
-                            tokens.push(token("1", TokenType.Number));
-                            src.shift();
-                        }
+                        if(prevtoken == null) break;
+
+                        tokens.push(token("=", TokenType.Equals));
+                        tokens.push(token(prevtoken.value, prevtoken.type));
+                        tokens.push(token(src.shift(), TokenType.BinaryOperator));
+                        tokens.push(token("1", TokenType.Number));
+                        src.shift();
+                        break;
+                    }
+                    // no break here to flow into the next case for += and -=
+                case "*":
+                case "/":
+                    if (src[1] == "=") {
+                        const prevtoken = tokens[tokens.length - 1];
+                        if(prevtoken == null) break;
+
+                        tokens.push(token("=", TokenType.Equals));
+                        tokens.push(token(prevtoken.value, prevtoken.type));
+                        tokens.push(token(src.shift(), TokenType.BinaryOperator));
+                        src.shift();
                         break;
                     }
                 default:
