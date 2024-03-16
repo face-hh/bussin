@@ -22,9 +22,7 @@ if (y == 1){
     println("no if statement matched")
 }
 
-let z = {
-    x, y
-}
+let z = { x, y };
 println(z)
 
 
@@ -37,12 +35,11 @@ printAll()
 println(printAll())
 println(time)
 
-for(let i = 0; i < 10; i = i + 1){
+for(let i = 0; i < 10; i++){
     println(strcon("Currently at ", i))
 }
 
 println(format("Hello, ${}", "Again"))
-println(math.random())
 
 try {
     println(haha)
@@ -55,12 +52,12 @@ try {
 
     println(res)
 } catch {
-    println(error, "User is running Windows/Macos")
+    println("User is running Windows/Macos")
 }
 
 let run = true;
 
-for(let i = 0; run == true; i = i + 1){
+for(let i = 0; run == true; i++){
     let move = input("Choose between W and A and press Enter > ");
 
     if(move == "w"){
@@ -72,6 +69,9 @@ for(let i = 0; run == true; i = i + 1){
     }
 
     if(i == 10) {
-        run = false;
+        run = false
     }
 }
+setTimeout(fn timeout() {
+    println("This took a few seconds didn't it.")
+}, 3000)
