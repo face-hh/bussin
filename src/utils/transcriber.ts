@@ -76,6 +76,8 @@ export async function transcribe(code: string) {
         .replace_fr("plusplus", "++")
         .replace_fr("times", "*")
         .replace_fr("divided by", "/")
+        .replace_fr("bye", "exit")
+        .replace_fr("soon", "setTimeout")
         .replace(/\: number/g, '')
         .replace(/\: string/g, '')
         .replace(/\: object/g, '')

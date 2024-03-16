@@ -23,7 +23,7 @@ async function run(filename: string) {
     const parser = new Parser();
     const env = createGlobalEnv();
 
-    let input = readFileSync(filename, 'utf-8') + "\nexit()";
+    let input = readFileSync(filename, 'utf-8') + "\nfinishExit()";
 
     if (filename.endsWith('.bsx')) input = await transcribe(input);
 

@@ -135,7 +135,9 @@ export function createGlobalEnv(): Environment {
         return MK_NULL();
     }), true);
 
-    env.declareVar("exit", MK_NATIVE_FN(() => {
+    env.declareVar("exit", MK_NATIVE_FN(() => process.exit()), true);
+
+    env.declareVar("finishExit", MK_NATIVE_FN(() => {
         if(timeoutDepth == 0) {
             process.exit();
         } else {
