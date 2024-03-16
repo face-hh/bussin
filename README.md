@@ -101,6 +101,12 @@ bruh perform(x, y) {
     x minus y
 }
 ```
+You can also run the function soon.
+```rs
+soon(bruh perform() {
+    waffle("A second later...")
+}, 1000)
+```
 
 ## If statements
 If statements in Bussin X are very intuitive:
@@ -180,11 +186,23 @@ waffle(nerd.ceil(3.4))
 waffle(nerd.round(3.9))
 waffle(nerd.abs(-2))
 ```
+You can also simplify your math equations:
+```rs
+x beplus 5
+y betimes 6
+i plusplus
+```
 
 ### Time
 You can access the current time by using:
 ```rs
 waffle(time())
+```
+
+### Exit
+You can exit your program like this:
+```rs
+exit()
 ```
 
 ### Command Line
