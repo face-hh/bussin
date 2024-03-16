@@ -101,15 +101,15 @@ bruh perform(x, y) {
     x minus y
 }
 ```
-You can also run the function soon:
+You can also run the function wait before running:
 ```rs
-soon(bruh perform() {
+hollup(bruh perform() {
     waffle("A second later...")
 }, 1000)
 ```
-And also can make it run frequently:
+And also can make it run at an interval:
 ```rs
-frequently(bruh perform() {
+yappacino(bruh perform() {
     waffle("Spam!!!")
 }, 1000)
 ```

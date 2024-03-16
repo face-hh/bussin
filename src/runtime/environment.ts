@@ -111,7 +111,7 @@ export function createGlobalEnv(): Environment {
             res = str.value.replace(/\${}/, arg.value);
         }
 
-        if (!args[0]) throw "2nd parameter in format! missing."
+        if (!args[0]) throw "Second parameter in \"format\" missing."
 
         return MK_STRING(res);
     }), true)
@@ -203,10 +203,10 @@ export default class Environment {
 
         let pastVal = env.variables.get(varname) as ObjectVal;
 
-        const currentProp = (evaluate(expr.property, env) as StringVal).value;
         const prop = property
             ? property.symbol
-            : currentProp;
+            : (expr.property as Identifier).symbol;
+        const currentProp = (expr.property as Identifier).symbol;
 
         if (value) pastVal.properties.set(prop, value);
 
