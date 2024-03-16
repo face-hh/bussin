@@ -15,6 +15,8 @@ We, at Bussin, believe everyone should be entertained while coding. Meet our alt
 Inside **Bussin X**, you *can* use BS syntax, however, it's recommended to use the **BSX** syntax described below. 
 
 ### New!
+- `hollup` will create a timeout. `hollup(bruh perform() { waffle("ok") }, 1000)`
+- `yappacino` will create an interval. `yappacino(bruh perform() { waffle("ok") }, 1000)`
 - `lit n be fake rn` will create `n` as `null`.
 - Object property setting is fixed! `lit obj be {} rn obj.e = nocap waffle(obj)`
 - Better error messages
