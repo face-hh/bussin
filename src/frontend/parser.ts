@@ -403,6 +403,8 @@ export default class Parser {
                     kind: "StringLiteral",
                     value: this.eat().value
                 } as StringLiteral;
+            case TokenType.Fn:
+                return this.parse_function_declaration();
             case TokenType.OpenParen:
                 this.eat(); // eat the opening paren
                 const value = this.parse_expr();

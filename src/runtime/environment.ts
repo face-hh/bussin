@@ -1,10 +1,11 @@
 import { exec, execSync } from 'child_process';
 const rl = require('readline-sync')
 
-import { Identifier, MemberExpr } from '../frontend/ast';
+import { CallExpr, Identifier, MemberExpr } from '../frontend/ast';
 import { printValues } from './eval/native-fns';
-import { MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal } from "./values";
+import { FunctionValue, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal } from "./values";
 import { evaluate } from './interpreter';
+import { eval_call_expr, eval_function } from './eval/expressions';
 
 export function createGlobalEnv(): Environment {
     const env = new Environment();
@@ -87,7 +88,7 @@ export function createGlobalEnv(): Environment {
             }))
     ), true)
 
-    env.declareVar("strcon", MK_NATIVE_FN((args, env) => {
+    env.declareVar("strcon", MK_NATIVE_FN((args,) => {
         let res = '';
 
         for (let i = 0; i < args.length; i++) {
@@ -99,7 +100,7 @@ export function createGlobalEnv(): Environment {
         return MK_STRING(res);
     }), true)
 
-    env.declareVar("format", MK_NATIVE_FN((args, env) => {
+    env.declareVar("format", MK_NATIVE_FN((args) => {
         const str = args.shift() as StringVal;
 
         let res = '';
@@ -115,11 +116,34 @@ export function createGlobalEnv(): Environment {
         return MK_STRING(res);
     }), true)
 
-    function timeFunction(args: RuntimeVal[], env: Environment) {
-        return MK_NUMBER(Date.now());
-    }
+    env.declareVar("time", MK_NATIVE_FN(() => MK_NUMBER(Date.now())), true);
 
-    env.declareVar("time", MK_NATIVE_FN(timeFunction), true)
+    let timeoutDepth = 0;
+    let shouldExit = false;
+
+    env.declareVar("setTimeout", MK_NATIVE_FN((args) => {
+        const func = args.shift() as FunctionValue;
+        const time = args.shift() as NumberVal;
+        timeoutDepth++;
+        setTimeout(() => {
+            eval_function(func, []); // No args can be present here, as none are given.
+            timeoutDepth--;
+            if(timeoutDepth == 0 && shouldExit) {
+                process.exit();
+            }
+        }, time.value);
+        return MK_NULL();
+    }), true);
+
+    env.declareVar("exit", MK_NATIVE_FN(() => {
+        if(timeoutDepth == 0) {
+            process.exit();
+        } else {
+            shouldExit = true;
+        }
+        return MK_NULL();
+    }), true);
+
     return env;
 }
 
