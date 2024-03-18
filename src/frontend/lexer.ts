@@ -181,11 +181,20 @@ export function tokenize(sourceCode: string): Token[] {
                     let str = "";
                     src.shift();
         
-                    while (src.length > 0 && src[0] !== '"') {
-                        str += src.shift();
+                    let escaped = false;
+                    while (src.length > 0) {
+                        const key = src.shift();
+                        if(key == "\\") {
+                            escaped = !escaped;
+                            if(escaped)continue;
+                        } else if (key == '"') {
+                            if(!escaped) {
+                                break;
+                            }
+                            escaped = false;
+                        }
+                        str += key;
                     }
-        
-                    src.shift();
         
                     // append new string token.
                     tokens.push(token(str, TokenType.String));

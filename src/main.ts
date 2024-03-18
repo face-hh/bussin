@@ -42,14 +42,13 @@ async function repl() {
     while (true) {
         const input = await rl.question("> ");
 
-        // check for no user input or exit keyword.
-        if (!input || input.includes("exit")) {
-            process.exit(1);
-        }
-
         const program = parser.produceAST(input);
 
-        const result = evaluate(program, env);
-        console.log(result);
+        try {
+            const result = evaluate(program, env);
+            console.log(result);
+        } catch(err) {
+            console.log(err);
+        }
     }
 }

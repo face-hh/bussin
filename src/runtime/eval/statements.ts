@@ -20,7 +20,7 @@ export function eval_val_declaration(declaration: VarDeclaration, env: Environme
     return env.declareVar(declaration.identifier, value, declaration.constant);
 }
 
-export function eval_function_declaration(declaration: FunctionDeclaration, env: Environment): RuntimeVal {
+export function eval_function_declaration(declaration: FunctionDeclaration, env: Environment, declared: boolean): RuntimeVal {
     // Create new function scope
     const fn = {
         type: "fn",
@@ -30,7 +30,7 @@ export function eval_function_declaration(declaration: FunctionDeclaration, env:
         body: declaration.body,
     } as FunctionValue;
 
-    return env.declareVar(declaration.name, fn, true);
+    return declared ? env.declareVar(declaration.name, fn, true) : fn;
 }
 
 export function eval_if_statement(declaration: IfStatement, env: Environment): RuntimeVal {

@@ -112,7 +112,7 @@ export function eval_function(func: FunctionValue, args: RuntimeVal[]): RuntimeV
 
     // Evaluate the function body line by line
     for (const stmt of func.body) {
-        result = evaluate(stmt, scope);
+        result = evaluate(stmt, scope, false);
     }
 
     return result;
