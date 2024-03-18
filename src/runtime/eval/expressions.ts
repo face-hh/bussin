@@ -112,14 +112,14 @@ export function eval_function(func: FunctionValue, args: RuntimeVal[]): RuntimeV
 
     // Evaluate the function body line by line
     for (const stmt of func.body) {
-        result = evaluate(stmt, scope, false);
+        result = evaluate(stmt, scope);
     }
 
     return result;
 }
 
 export function eval_call_expr(expr: CallExpr, env: Environment): RuntimeVal {
-    const args = expr.args.map(arg => evaluate(arg, env));
+    const args = expr.args.map(arg => evaluate(arg, env, false));
     const fn = evaluate(expr.caller, env);
 
     if (fn.type == "native-fn") {
