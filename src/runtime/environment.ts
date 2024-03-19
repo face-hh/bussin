@@ -1,11 +1,12 @@
-import { exec, execSync } from 'child_process';
+import { execSync } from 'child_process';
+import request, { HttpVerb } from 'sync-request';
 const rl = require('readline-sync')
+import * as fs from 'fs';
 
-import { CallExpr, Identifier, MemberExpr } from '../frontend/ast';
+import { Identifier, MemberExpr } from '../frontend/ast';
 import { printValues } from './eval/native-fns';
 import { FunctionValue, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal } from "./values";
-import { evaluate } from './interpreter';
-import { eval_call_expr, eval_function } from './eval/expressions';
+import { eval_function } from './eval/expressions';
 
 export function createGlobalEnv(): Environment {
     const env = new Environment();
@@ -153,6 +154,51 @@ export function createGlobalEnv(): Environment {
         }
         return MK_NULL();
     }), true);
+
+    env.declareVar("fetch", MK_NATIVE_FN((args) => {
+        const url = args.shift() as StringVal;
+        const options = args.shift() as ObjectVal;
+    
+        const method = options == undefined ? "GET" : (options.properties.get("method") as StringVal)?.value ?? "GET";
+        const body = options == undefined ? null : (options.properties.get("body") as StringVal)?.value ?? null;
+    
+        const res = request(method as HttpVerb, url.value, { body });
+        if (res.statusCode !== 200) {
+            throw new Error("Failed to fetch data: " + res.body.toString('utf8'));
+        }
+    
+        return MK_STRING(res.body.toString('utf8'));
+    }), true);
+
+    env.declareVar("fs", MK_OBJECT(
+        new Map()
+            .set("read", MK_NATIVE_FN((args) => {
+                const path = (args.shift() as StringVal).value;
+                const encoding = (args.shift() as StringVal)?.value ?? "utf8";
+                const read = fs.readFileSync(path, encoding as fs.EncodingOption);
+                return MK_STRING(read.toString());
+            }))
+            .set("write", MK_NATIVE_FN((args) => {
+                const path = (args.shift() as StringVal).value;
+                const data = (args.shift() as StringVal).value;
+                fs.writeFileSync(path, data);
+                return MK_NULL();
+            }))
+            .set("exists", MK_NATIVE_FN((args) => {
+                const path = (args.shift() as StringVal).value;
+                return MK_BOOL(fs.existsSync(path));
+            }))
+            .set("rm", MK_NATIVE_FN((args) => {
+                const path = (args.shift() as StringVal).value;
+                fs.rmSync(path);
+                return MK_NULL();
+            }))
+            .set("rmdir", MK_NATIVE_FN((args) => {
+                const path = (args.shift() as StringVal).value;
+                fs.rmdirSync(path);
+                return MK_NULL();
+            }))
+    ), true);
 
     return env;
 }

@@ -66,9 +66,7 @@ fuck_around {
     waffle(error, "Blud running on windows 💀")
 }
 
-lit run be nocap rn
-
-yall(lit i be 0 rn run be nocap rn i be i + 1){
+yall(lit i be 0 rn i smol 10 rn i plusplus){
     lit move be yap("Choose between W and A and press Enter > ") rn
 
     sus(move fr "w"){
@@ -79,5 +77,9 @@ yall(lit i be 0 rn run be nocap rn i be i + 1){
         waffle("I FUCKING TOLD YOU WHAT TO DO MORON")
     }
 
-    sus(i be 10) { run be nocap }
 }
+
+waffle("ok i hollup")
+hollup(bruh perform() {
+    waffle("yappers")
+}, 1000)
