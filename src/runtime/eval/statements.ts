@@ -2,7 +2,7 @@ import { FunctionDeclaration, IfStatement, Program, Stmt, VarDeclaration, ForSta
 import Environment from "../environment";
 import { evaluate } from "../interpreter";
 import { BooleanVal, FunctionValue, MK_NULL, RuntimeVal } from "../values";
-import { eval_assignment, eval_binary_expr } from "./expressions";
+import { eval_assignment } from "./expressions";
 
 export function eval_program(program: Program, env: Environment): RuntimeVal {
     let lastEvaluated: RuntimeVal = MK_NULL();
@@ -20,7 +20,7 @@ export function eval_val_declaration(declaration: VarDeclaration, env: Environme
     return env.declareVar(declaration.identifier, value, declaration.constant);
 }
 
-export function eval_function_declaration(declaration: FunctionDeclaration, env: Environment, declared: boolean): RuntimeVal {
+export function eval_function_declaration(declaration: FunctionDeclaration, env: Environment, functionCall: boolean): RuntimeVal {
     // Create new function scope
     const fn = {
         type: "fn",
@@ -30,7 +30,7 @@ export function eval_function_declaration(declaration: FunctionDeclaration, env:
         body: declaration.body,
     } as FunctionValue;
 
-    return declared ? env.declareVar(declaration.name, fn, true) : fn;
+    return functionCall ? fn : env.declareVar(declaration.name, fn, true);
 }
 
 export function eval_if_statement(declaration: IfStatement, env: Environment): RuntimeVal {

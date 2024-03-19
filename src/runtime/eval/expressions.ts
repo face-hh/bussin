@@ -1,7 +1,7 @@
 import { AssignmentExpr, BinaryExpr, CallExpr, Identifier, MemberExpr, ObjectLiteral } from "../../frontend/ast";
 import Environment from "../environment";
 import { evaluate } from "../interpreter";
-import { NumberVal, RuntimeVal, MK_NULL, ObjectVal, NativeFnValue, FunctionValue, BooleanVal, ValueType, StringVal, NullVal, MK_NUMBER, MK_BOOL, MK_STRING } from "../values";
+import { NumberVal, RuntimeVal, MK_NULL, ObjectVal, NativeFnValue, FunctionValue, BooleanVal, StringVal, NullVal, MK_NUMBER, MK_BOOL } from "../values";
 
 export function eval_numeric_binary_expr(lhs: RuntimeVal, rhs: RuntimeVal, operator: string): RuntimeVal {
 
@@ -119,7 +119,7 @@ export function eval_function(func: FunctionValue, args: RuntimeVal[]): RuntimeV
 }
 
 export function eval_call_expr(expr: CallExpr, env: Environment): RuntimeVal {
-    const args = expr.args.map(arg => evaluate(arg, env, false));
+    const args = expr.args.map(arg => evaluate(arg, env, true));
     const fn = evaluate(expr.caller, env);
 
     if (fn.type == "native-fn") {
