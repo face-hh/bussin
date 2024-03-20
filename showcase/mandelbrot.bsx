@@ -9,17 +9,17 @@ bruh mandelbrot(real, imag) {
 
     lit return be limit rn
 
-    yall (lit i be 0 rn i smol limit rn i be i + 1) {
+    yall (lit i be 0 rn i smol limit rn i plusplus) {
         sus (break fr cap) {
-            lit rtwo be zReal * zReal rn
-            lit itwo be zImag * zImag rn
+            lit rtwo be zReal times zReal rn
+            lit itwo be zImag times zImag rn
 
-            sus (rtwo + itwo thicc 4) {
+            sus (rtwo plus itwo thicc 4) {
                 break be nocap
                 return be i
             } impostor {
-                zImag be 2 * zReal * zImag + imag
-                zReal be rtwo - itwo + real
+                zImag be 2 times zReal times zImag plus imag
+                zReal be rtwo minus itwo plus real
             }
         }
     }
@@ -29,13 +29,13 @@ bruh mandelbrot(real, imag) {
 lit width be 150 rn
 lit height be 50 rn
 
-lit xstart be 0 - (9/4) rn
-lit xfin be (1/4) rn
-lit ystart be 0 - 1 rn
+lit xstart be 0 minus (9 divided by 4) rn
+lit xfin be (1 divided by 4) rn
+lit ystart be 0 minus 1 rn
 lit yfin be 1 rn
 
-lit dx be (yfin - xstart) / (width - 1) rn
-lit dy be (yfin - ystart) / (height - 1) rn
+lit dx be (yfin minus xstart) divided by (width minus 1) rn
+lit dy be (yfin minus ystart) divided by (height minus 1) rn
 
 lit line be "${}" rn
 lit x be 0 rn
@@ -43,17 +43,17 @@ lit y be 0 rn
 lit value be 0 rn
 
 lit borderH be "++${}" rn
-yall (lit i be 0 rn i smol width rn i be i + 1) {
+yall (lit i be 0 rn i smol width rn i plusplus) {
     borderH be format(borderH, "=${}")
 }
 borderH be format(borderH, "++")
 waffle(borderH)
 
-yall (lit i be 0 rn i smol height rn i be i + 1) {
+yall (lit i be 0 rn i smol height rn i plusplus) {
     line be "||${}"
-    yall (lit j be 0 rn j smol width rn j be j + 1) {
-        x be xstart + j*dx
-        y be ystart + i*dy
+    yall (lit j be 0 rn j smol width rn j plusplus) {
+        x be xstart plus j times dx
+        y be ystart plus i times dy
 
         value be mandelbrot(x,y)
 
