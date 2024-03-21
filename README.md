@@ -15,11 +15,11 @@ We, at Bussin, believe everyone should be entertained while coding. Meet our alt
 Inside **Bussin X**, you *can* use BS syntax, however, it's recommended to use the **BSX** syntax described below. 
 
 ### New!
+- `import` will import data from another file. `lit db be import("./database.bs") rn`
+- `objects` is available for dynamic object keys. `objects.get(obj, yap("Name> "))`
 - `hollup` will create a timeout. `hollup(bruh perform() { waffle("ok") }, 1000)`
 - `yappacino` will create an interval. `yappacino(bruh perform() { waffle("ok") }, 1000)`
-- `lit n be fake rn` will create `n` as `null`.
 - Object property setting is fixed! `lit obj be {} rn obj.e = nocap waffle(obj)`
-- Better error messages
 
 ## Variables
 Mutable variables are created with:
@@ -103,13 +103,13 @@ bruh perform(x, y) {
     x minus y
 }
 ```
-You can also run the function wait before running:
+You can also run the function after a specified timespan:
 ```rs
 hollup(bruh perform() {
     waffle("A second later...")
 }, 1000)
 ```
-And also can make it run at an interval:
+And you can also make it run at an interval:
 ```rs
 yappacino(bruh perform() {
     waffle("Spam!!!")
@@ -206,6 +206,29 @@ You can access the current time by using:
 ```rs
 waffle(time())
 ```
+
+### Importing
+You can import data from another bussin file like this:
+```rs
+lit stuff be import("./stuff.bs") rn 
+```
+(Note: Bussin X files are currently not supported by import, so you can only import .bs)
+
+The last value emitted in a file will be the exported data:
+```rs
+fn printStuff() {
+    println("Bussin")
+}
+fn printStuff2() {
+    println("Also Bussin")
+}
+
+{
+    printStuff,
+    printStuff2
+}
+```
+If imported, the result will be an object which you can do obj.printStuff and obj.printStuff2
 
 ### Exit
 You can exit your program like this:
