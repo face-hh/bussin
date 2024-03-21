@@ -48,7 +48,7 @@ async function run(filename: string) {
 
 async function repl() {
     const parser = new Parser();
-    const env = createGlobalEnv(-1, __dirname, new Map(), "-");
+    const env = createGlobalEnv();
 
     console.log("Repl v1.0 (Bussin)");
 

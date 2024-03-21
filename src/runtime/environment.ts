@@ -11,7 +11,7 @@ import Parser from '../frontend/parser';
 import { evaluate } from './interpreter';
 import { transcribe } from '../utils/transcriber';
 
-export function createGlobalEnv(beginTime: number, filePath: string, args: Map<string, RuntimeVal>, currency: string): Environment {
+export function createGlobalEnv(beginTime: number = -1, filePath: string = __dirname, args: Map<string, RuntimeVal> = new Map(), currency: string = "-"): Environment {
     const env = new Environment();
 
     env.declareVar("true", MK_BOOL(true), true);
