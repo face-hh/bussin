@@ -11,7 +11,10 @@ const rl = readline.createInterface({
     output: process.stdout
 });
 
-const file = process.argv[2];
+const args = process.argv;
+args.shift();
+args.shift();
+const file = args.shift();
 
 if(file) {
     run(file);
@@ -20,22 +23,28 @@ if(file) {
 }
 
 async function run(filename: string) {
+    const begin = Date.now();
+
+    const argMap = new Map();
+    args.forEach((value, index) => {
+        argMap.set("v" + index, value);
+    });
+
     const parser = new Parser();
-    const env = createGlobalEnv();
+    const env = createGlobalEnv(args.includes("--time") ? begin : -1, filename.substring(0, filename.lastIndexOf("/") + 1), argMap);
 
     let input = readFileSync(filename, 'utf-8') + "\nfinishExit()";
 
     if (filename.endsWith('.bsx')) input = await transcribe(input);
 
     const program = parser.produceAST(input);
-    const result = evaluate(program, env);
-
-    return result;
+    
+    evaluate(program, env);
 }
 
 async function repl() {
     const parser = new Parser();
-    const env = createGlobalEnv();
+    const env = createGlobalEnv(-1, __dirname, new Map());
 
     console.log("Repl v1.0 (Bussin)");
 

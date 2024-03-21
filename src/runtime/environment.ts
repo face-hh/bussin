@@ -7,8 +7,10 @@ import { Identifier, MemberExpr } from '../frontend/ast';
 import { printValues } from './eval/native-fns';
 import { FunctionValue, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal } from "./values";
 import { eval_function } from './eval/expressions';
+import Parser from '../frontend/parser';
+import { evaluate } from './interpreter';
 
-export function createGlobalEnv(): Environment {
+export function createGlobalEnv(beginTime: number, filePath: string, args: Map<string, RuntimeVal>): Environment {
     const env = new Environment();
 
     env.declareVar("true", MK_BOOL(true), true);
@@ -16,6 +18,7 @@ export function createGlobalEnv(): Environment {
     env.declareVar("null", MK_NULL(), true);
 
     env.declareVar("error", MK_NULL(), false);
+    env.declareVar("args", MK_OBJECT(args), true)
 
     // Define a native builtin method
     env.declareVar("println", MK_NATIVE_FN((args) => {
@@ -144,17 +147,6 @@ export function createGlobalEnv(): Environment {
         return MK_NULL();
     }), true);
 
-    env.declareVar("exit", MK_NATIVE_FN(() => process.exit()), true);
-
-    env.declareVar("finishExit", MK_NATIVE_FN(() => {
-        if(timeoutDepth == 0) {
-            process.exit();
-        } else {
-            shouldExit = true;
-        }
-        return MK_NULL();
-    }), true);
-
     env.declareVar("fetch", MK_NATIVE_FN((args) => {
         const url = args.shift() as StringVal;
         const options = args.shift() as ObjectVal;
@@ -170,31 +162,38 @@ export function createGlobalEnv(): Environment {
         return MK_STRING(res.body.toString('utf8'));
     }), true);
 
+    function localPath(path: string) {
+        if(path.startsWith(".") || !path.includes(":")) {
+            path = filePath + path;
+        }
+        return path;
+    }
+
     env.declareVar("fs", MK_OBJECT(
         new Map()
             .set("read", MK_NATIVE_FN((args) => {
-                const path = (args.shift() as StringVal).value;
+                const path = localPath((args.shift() as StringVal).value);
                 const encoding = (args.shift() as StringVal)?.value ?? "utf8";
                 const read = fs.readFileSync(path, encoding as fs.EncodingOption);
                 return MK_STRING(read.toString());
             }))
             .set("write", MK_NATIVE_FN((args) => {
-                const path = (args.shift() as StringVal).value;
+                const path = localPath((args.shift() as StringVal).value);
                 const data = (args.shift() as StringVal).value;
                 fs.writeFileSync(path, data);
                 return MK_NULL();
             }))
             .set("exists", MK_NATIVE_FN((args) => {
-                const path = (args.shift() as StringVal).value;
+                const path = localPath((args.shift() as StringVal).value);
                 return MK_BOOL(fs.existsSync(path));
             }))
             .set("rm", MK_NATIVE_FN((args) => {
-                const path = (args.shift() as StringVal).value;
+                const path = localPath((args.shift() as StringVal).value);
                 fs.rmSync(path);
                 return MK_NULL();
             }))
             .set("rmdir", MK_NATIVE_FN((args) => {
-                const path = (args.shift() as StringVal).value;
+                const path = localPath((args.shift() as StringVal).value);
                 fs.rmdirSync(path);
                 return MK_NULL();
             }))
@@ -225,6 +224,34 @@ export function createGlobalEnv(): Environment {
     env.declareVar("len", MK_NATIVE_FN((args) => {
         const string = (args.shift() as StringVal).value;
         return MK_NUMBER(string.length);
+    }), true);
+
+    env.declareVar("import", MK_NATIVE_FN((args) => {
+        const path = localPath((args.shift() as StringVal).value);
+        const input = fs.readFileSync(path, "utf-8");
+        
+        const parser = new Parser();
+        const program = parser.produceAST(input);
+
+        return evaluate(program, env); // this will evaluate and return the last value emitted. neat
+    }), true);
+
+    function closeBussin(): null {
+        if(beginTime != -1) {
+            console.log(`\nBussin executed in ${(Date.now() - beginTime).toLocaleString()}ms.`);
+        }
+        process.exit();
+    }
+
+    env.declareVar("exit", MK_NATIVE_FN(() => closeBussin()), true);
+
+    env.declareVar("finishExit", MK_NATIVE_FN(() => {
+        if(timeoutDepth == 0) {
+            closeBussin();
+        } else {
+            shouldExit = true;
+        }
+        return MK_NULL();
     }), true);
 
     return env;
