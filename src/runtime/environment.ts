@@ -200,6 +200,28 @@ export function createGlobalEnv(): Environment {
             }))
     ), true);
 
+    env.declareVar("objects", MK_OBJECT(
+        new Map()
+            .set("hasKey", MK_NATIVE_FN((args) => {
+                const obj = (args.shift() as ObjectVal).properties;
+                const value = (args.shift() as StringVal).value;
+                const within = obj.has(value);
+                return MK_BOOL(within);
+            }))
+            .set("get", MK_NATIVE_FN((args) => {
+                const obj = (args.shift() as ObjectVal).properties;
+                const key = (args.shift() as StringVal).value;
+                return obj.get(key);
+            }))
+            .set("set", MK_NATIVE_FN((args) => {
+                const obj = (args.shift() as ObjectVal).properties;
+                const key = (args.shift() as StringVal).value;
+                const value = (args.shift() as RuntimeVal);
+                obj.set(key, value);
+                return MK_NULL();
+            }))
+    ), true)
+
     env.declareVar("len", MK_NATIVE_FN((args) => {
         const string = (args.shift() as StringVal).value;
         return MK_NUMBER(string.length);
