@@ -11,11 +11,11 @@ import { eval_function } from './eval/expressions';
 export function createGlobalEnv(): Environment {
     const env = new Environment();
 
-    env.declareVar("true", MK_BOOL(true), true)
-    env.declareVar("false", MK_BOOL(false), true)
-    env.declareVar("null", MK_NULL(), true)
+    env.declareVar("true", MK_BOOL(true), true);
+    env.declareVar("false", MK_BOOL(false), true);
+    env.declareVar("null", MK_NULL(), true);
 
-    env.declareVar("error", MK_NULL(), false)
+    env.declareVar("error", MK_NULL(), false);
 
     // Define a native builtin method
     env.declareVar("println", MK_NATIVE_FN((args) => {
@@ -199,6 +199,11 @@ export function createGlobalEnv(): Environment {
                 return MK_NULL();
             }))
     ), true);
+
+    env.declareVar("len", MK_NATIVE_FN((args) => {
+        const string = (args.shift() as StringVal).value;
+        return MK_NUMBER(string.length);
+    }), true);
 
     return env;
 }
