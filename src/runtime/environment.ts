@@ -9,8 +9,9 @@ import { FunctionValue, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK
 import { eval_function } from './eval/expressions';
 import Parser from '../frontend/parser';
 import { evaluate } from './interpreter';
+import { transcribe } from '../utils/transcriber';
 
-export function createGlobalEnv(beginTime: number, filePath: string, args: Map<string, RuntimeVal>): Environment {
+export function createGlobalEnv(beginTime: number, filePath: string, args: Map<string, RuntimeVal>, currency: string): Environment {
     const env = new Environment();
 
     env.declareVar("true", MK_BOOL(true), true);
@@ -228,7 +229,14 @@ export function createGlobalEnv(beginTime: number, filePath: string, args: Map<s
 
     env.declareVar("import", MK_NATIVE_FN((args) => {
         const path = localPath((args.shift() as StringVal).value);
-        const input = fs.readFileSync(path, "utf-8");
+
+        let input;
+        if(path.endsWith(".bs")) {
+            input = fs.readFileSync(path, "utf-8");
+        } else if (path.endsWith(".bsx")) {
+            if(currency == "-") throw "Cannot run Bussin X from Bussin: " + path;
+            input = transcribe(fs.readFileSync(path, "utf-8"), currency);
+        } else throw "Not a Bussin [X] file: " + path
         
         const parser = new Parser();
         const program = parser.produceAST(input);

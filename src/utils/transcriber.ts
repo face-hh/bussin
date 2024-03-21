@@ -27,7 +27,7 @@ String.prototype.replace_fr = function (target: string, replacement: string): st
 
 const currencies = JSON.parse(readFileSync('./src/utils/currencies.json', 'utf-8'))
 
-async function get_currency() {
+export async function get_currency() {
     const { country } = await get_country();
     const currency = currencies.find((el: Currency) => el.code === country)
 
@@ -42,9 +42,7 @@ async function get_country() {
     return geo;
 }
 
-export async function transcribe(code: string) {
-    const currency = await get_currency();
-
+export function transcribe(code: string, currency: string) {
     return code
         .replace_fr(";", '!')
         .replace_fr("rn", ';')

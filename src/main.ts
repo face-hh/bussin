@@ -4,7 +4,7 @@ import { evaluate } from "./runtime/interpreter";
 
 import * as readline from 'readline/promises';
 import { readFileSync } from "fs";
-import { transcribe } from "./utils/transcriber";
+import { get_currency, transcribe } from "./utils/transcriber";
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -25,17 +25,21 @@ if(file) {
 async function run(filename: string) {
     const begin = Date.now();
 
+    let input = readFileSync(filename, 'utf-8') + "\nfinishExit()";
+    
+    let currency = "-";
+    if (filename.endsWith('.bsx')) {
+        currency = await get_currency();
+        input = transcribe(input, currency);
+    }
+
     const argMap = new Map();
     args.forEach((value, index) => {
         argMap.set("v" + index, value);
     });
 
     const parser = new Parser();
-    const env = createGlobalEnv(args.includes("--time") ? begin : -1, filename.substring(0, filename.lastIndexOf("/") + 1), argMap);
-
-    let input = readFileSync(filename, 'utf-8') + "\nfinishExit()";
-
-    if (filename.endsWith('.bsx')) input = await transcribe(input);
+    const env = createGlobalEnv(args.includes("--time") ? begin : -1, filename.substring(0, filename.lastIndexOf("/") + 1), argMap, currency);
 
     const program = parser.produceAST(input);
     
@@ -44,7 +48,7 @@ async function run(filename: string) {
 
 async function repl() {
     const parser = new Parser();
-    const env = createGlobalEnv(-1, __dirname, new Map());
+    const env = createGlobalEnv(-1, __dirname, new Map(), "-");
 
     console.log("Repl v1.0 (Bussin)");
 
