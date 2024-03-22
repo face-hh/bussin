@@ -43,9 +43,7 @@ String.prototype.replace_currency = function (currency: string): string {
     return this.replace(pattern, "${}");
 }
 
-const currencies = JSON.parse(readFileSync('./src/utils/currencies.json', 'utf-8'))
-
-export async function get_currency() {
+export async function get_currency(currencies: any) {
     const { country } = await get_country();
     const currency = currencies.find((el: Currency) => el.code === country)
 
