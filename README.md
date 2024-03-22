@@ -210,17 +210,16 @@ waffle(time())
 ### Importing
 You can import data from another bussin file like this:
 ```rs
-lit stuff be import("./stuff.bs") rn 
+lit stuff be import("./stuff.bsx") rn 
 ```
-(Note: Bussin X files are currently not supported by import, so you can only import .bs)
 
 The last value emitted in a file will be the exported data:
 ```rs
-fn printStuff() {
-    println("Bussin")
+bruh printStuff() {
+    waffle("Bussin X")
 }
-fn printStuff2() {
-    println("Also Bussin")
+bruh printStuff2() {
+    waffle("Also Bussin X")
 }
 
 {
