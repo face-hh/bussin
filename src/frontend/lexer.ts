@@ -79,7 +79,16 @@ const TOKEN_CHARS: Record<string, TokenType> = {
     "|": TokenType.Bar,
 };
 
-// Reoresents a single token from the source-code.
+/**
+ * A list of all escapable characters in strings
+ */
+const ESCAPED: Record<string, string> = {
+    n: "\n",
+    t: "\t",
+    r: "\r",
+};
+
+// Represents a single token from the source-code.
 export interface Token {
     value: string; // contains the raw value as seen inside the source code.
     type: TokenType; // tagged structure.
@@ -192,6 +201,12 @@ export function tokenize(sourceCode: string): Token[] {
                                 break;
                             }
                             escaped = false;
+                        } else if (escaped) {
+                            if(ESCAPED[key]) {
+                                escaped = false;
+                                str += ESCAPED[key];
+                                continue;
+                            }
                         }
                         str += key;
                     }

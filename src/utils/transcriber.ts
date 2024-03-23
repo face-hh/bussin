@@ -2,13 +2,6 @@ import { readFileSync } from "fs";
 import axios from 'axios';
 const geoip = require('geoip-lite');
 
-// fuck off typescript
-declare global {
-    interface String {
-        replace_fr(target: string, replacement: string): string;
-    }
-}
-
 interface Currency {
     code: string;
     currency: {
@@ -19,15 +12,38 @@ interface Currency {
     };
 }
 
+// @ts-ignore
 String.prototype.replace_fr = function (target: string, replacement: string): string {
     const pattern = new RegExp(`\\b${target}\\b(?=(?:(?:[^"]*"){2})*[^"]*$)`, 'g');
     
     return this.replace(pattern, replacement);
 }
 
-const currencies = JSON.parse(readFileSync('./src/utils/currencies.json', 'utf-8'))
+const rightsideCurrencies = [
+    "€", // Euro
+    "£", // British Pound
+    "CHF", // Swiss Franc
+    "kr", // Danish Krone, Norwegian Krone, Swedish Krona
+    "zł", // Polish Zloty
+    "Ft", // Hungarian Forint
+    "Kč", // Czech Koruna
+    "kn", // Croatian Kuna
+    "RSD", // Serbian Dinar
+    "лв", // Bulgarian Lev
+    "lei", // Romanian Leu
+    "₽", // Russian Ruble
+    "₺", // Turkish Lira
+    "₴" // Ukrainian Hryvnia
+];   
 
-async function get_currency() {
+// @ts-ignore
+String.prototype.replace_currency = function (currency: string): string {
+    const pattern = new RegExp(`${rightsideCurrencies.includes(currency) ? "{}" + currency : currency + "{}"}`, 'g');
+
+    return this.replace(pattern, "${}");
+}
+
+export async function get_currency(currencies: any) {
     const { country } = await get_country();
     const currency = currencies.find((el: Currency) => el.code === country)
 
@@ -42,10 +58,9 @@ async function get_country() {
     return geo;
 }
 
-export async function transcribe(code: string) {
-    const currency = await get_currency();
-
+export function transcribe(code: string, currency: string) {
     return code
+        // @ts-ignore
         .replace_fr(";", '!')
         .replace_fr("rn", ';')
         .replace_fr("be", '=')
@@ -87,5 +102,5 @@ export async function transcribe(code: string) {
         .replace(/\: string/g, '')
         .replace(/\: object/g, '')
         .replace(/\: boolean/g, '')
-        .replace(new RegExp(`${currency}{}`), '${}')
+        .replace_currency(currency);
 }

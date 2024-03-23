@@ -4,14 +4,17 @@ import { evaluate } from "./runtime/interpreter";
 
 import * as readline from 'readline/promises';
 import { readFileSync } from "fs";
-import { transcribe } from "./utils/transcriber";
+import { get_currency, transcribe } from "./utils/transcriber";
 
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
 });
 
-const file = process.argv[2];
+const args = process.argv;
+args.shift();
+args.shift();
+const file = args.shift();
 
 if(file) {
     run(file);
@@ -20,17 +23,29 @@ if(file) {
 }
 
 async function run(filename: string) {
-    const parser = new Parser();
-    const env = createGlobalEnv();
+
+    const begin = Date.now();
 
     let input = readFileSync(filename, 'utf-8') + "\nfinishExit()";
+    
+    let currency = "-";
+    if (filename.endsWith('.bsx')) {
+        const currencies = JSON.parse(readFileSync(__dirname + "/../src/utils/currencies.json", "utf-8")); // should work for /src/ and /dist/
+        currency = await get_currency(currencies);
+        input = transcribe(input, currency);
+    }
 
-    if (filename.endsWith('.bsx')) input = await transcribe(input);
+    const argMap = new Map();
+    args.forEach((value, index) => {
+        argMap.set("v" + index, value);
+    });
+
+    const parser = new Parser();
+    const env = createGlobalEnv(args.includes("--time") ? begin : -1, filename.substring(0, filename.lastIndexOf("/") + 1), argMap, currency);
 
     const program = parser.produceAST(input);
-    const result = evaluate(program, env);
-
-    return result;
+    
+    evaluate(program, env);
 }
 
 async function repl() {
