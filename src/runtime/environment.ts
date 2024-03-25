@@ -70,6 +70,7 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
     env.declareVar("math", MK_OBJECT(
         new Map()
             .set("pi", Math.PI)
+            .set("e", Math.E)
             .set("sqrt", MK_NATIVE_FN((args) => {
                 const arg = (args[0] as NumberVal).value;
                 return MK_NUMBER(Math.sqrt(arg));
@@ -93,6 +94,15 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
             .set("abs", MK_NATIVE_FN((args) => {
                 const arg = (args[0] as NumberVal).value;
                 return MK_NUMBER(Math.abs(arg));
+            }))
+            .set("toString", MK_NATIVE_FN((args) => {
+                const arg = (args[0] as NumberVal).value;
+                return MK_STRING(arg.toString());
+            }))
+            .set("toNumber", MK_NATIVE_FN((args) => {
+                const arg = (args[0] as StringVal).value;
+                const number = parseFloat(arg);
+                return MK_NUMBER(number);
             }))
     ), true)
 

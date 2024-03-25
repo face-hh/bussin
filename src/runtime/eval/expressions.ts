@@ -10,11 +10,12 @@ export function eval_numeric_binary_expr(lhs: RuntimeVal, rhs: RuntimeVal, opera
             if(lhs.type !== "boolean" || rhs.type !== "boolean") return MK_BOOL(false);
             return MK_BOOL((lhs as BooleanVal).value || (rhs as BooleanVal).value);
         }
+        case "&&":
+            if(lhs.type !== "boolean" || rhs.type !== "boolean") return MK_BOOL(false);
+            return MK_BOOL((lhs as BooleanVal).value && (rhs as BooleanVal).value);
         case "!=":
             return equals(lhs, rhs, false);
         case "==":
-            return equals(lhs, rhs, true);
-        case "&&":
             return equals(lhs, rhs, true);
         default: {
             if (lhs.type !== 'number' || rhs.type !== 'number') return MK_BOOL(false);
