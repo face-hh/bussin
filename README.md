@@ -229,19 +229,35 @@ lit stuff be import("./stuff.bsx") rn
 
 The last value emitted in a file will be the exported data:
 ```rs
-bruh printStuff() {
+bruh waffleStuff() {
     waffle("Bussin X")
 }
-bruh printStuff2() {
+bruh waffleStuff2() {
     waffle("Also Bussin X")
 }
 
 {
-    printStuff,
-    printStuff2
+    waffleStuff,
+    waffleStuff2
 }
 ```
-If imported, the result will be an object which you can do obj.printStuff and obj.printStuff2
+If imported, the result will be an object which you can do obj.waffleStuff and obj.waffleStuff2
+
+### Regex
+You can use regex like this:
+```rs
+lit string be "Hello World" rn
+
+lit matches be regex.match(string, "/World/g") rn
+
+waffle(matches) /* [ 'World' ] */
+```
+And this:
+```rs
+lit string be "Hello World" rn
+
+waffle(regex.replace(string, "/World/g", "Everybody")) /* Hello Everybody */
+```
 
 ### Exit
 You can exit your program like this:
