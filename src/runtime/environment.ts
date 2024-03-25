@@ -154,8 +154,9 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
     
         const method = options == undefined ? "GET" : (options.properties.get("method") as StringVal)?.value ?? "GET";
         const body = options == undefined ? null : (options.properties.get("body") as StringVal)?.value ?? null;
-    
-        const res = request(method as HttpVerb, url.value, { body });
+        const content_type = options == undefined ? "text/plain" : (options.properties.get("content_type") as StringVal)?.value ?? "text/plain";
+
+        const res = request(method as HttpVerb, url.value, { body: body, headers: { "content-type": content_type } });
         if (res.statusCode !== 200) {
             throw new Error("Failed to fetch data: " + res.body.toString('utf8'));
         }
@@ -243,6 +244,44 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
 
         return evaluate(program, env); // this will evaluate and return the last value emitted. neat
     }), true);
+
+    function parseRegex(regex: string): RegExp {
+        const split = regex.split("/");
+        if(split.length < 3) throw "Invalid regex: " + regex;
+
+        split.shift(); // remove empty
+
+        const flags = split[split.length - 1];
+
+        const full = split.join("/");
+        const pattern = full.substring(0, full.length - (flags.length + 1));
+
+        return new RegExp(pattern, flags);
+    }
+
+    env.declareVar("regex", MK_OBJECT(
+        new Map()
+            .set("match", MK_NATIVE_FN((args) => {
+                const string = (args.shift() as StringVal).value;
+                
+                const regex = parseRegex((args.shift() as StringVal).value);
+                const matches = string.match(regex);
+
+                const map = new Map();
+                matches.forEach((match, index) => map.set("v" + index, match));
+
+                return MK_OBJECT(map);
+            }))
+            .set("replace", MK_NATIVE_FN((args) => {
+                const string = (args.shift() as StringVal).value;
+                const regex = parseRegex((args.shift() as StringVal).value);
+
+                const replaceValue = (args.shift() as StringVal).value;
+                const replaced = string.replace(regex, replaceValue);
+                
+                return MK_STRING(replaced);
+            }))
+    ), true);
 
     function closeBussin(): null {
         if(beginTime != -1) {

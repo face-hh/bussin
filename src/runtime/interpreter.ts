@@ -38,6 +38,7 @@ export function evaluate(astNode: Stmt, env: Environment, functionCall: boolean 
             return eval_val_declaration(astNode as VarDeclaration, env);
         case "FunctionDeclaration":
             return eval_function_declaration(astNode as FunctionDeclaration, env, functionCall);
+            
         default:
             console.error("This AST node has not yet been setup for interpretation", astNode);
             process.exit(0)
