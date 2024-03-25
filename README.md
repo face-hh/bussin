@@ -52,9 +52,9 @@ waffle(format("Hello, ${}", "World"))
 However, you must use your regional currency symbol.
 ```rs
 waffle(format("Hello, ${}", "World"))
-waffle(format("Hello, €{}", "World"))
-waffle(format("Hello, £{}", "World"))
 waffle(format("Hello, ¥{}", "World"))
+waffle(format("Hello, {}€", "World"))
+waffle(format("Hello, {}£", "World"))
 ```
 
 ### Numbers
