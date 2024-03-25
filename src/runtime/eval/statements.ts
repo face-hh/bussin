@@ -77,8 +77,8 @@ export function eval_for_statement(declaration: ForStatement, env: Environment):
     if ((test as BooleanVal).value !== true) return MK_NULL(); // The loop didn't start
 
     do {
-        eval_assignment(update, env);
         eval_body(body, new Environment(env), false);
+        eval_assignment(update, env);
 
         test = evaluate(declaration.test, env);
     } while ((test as BooleanVal).value);
