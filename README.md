@@ -87,9 +87,21 @@ obj.key be cap
 waffle(obj.key)
 ```
 ### Arrays
-We, at Bussin X, believe arrays are redundant.
+Arrays contain information without needing keys. Bussin X has them as well:
+```rs
+lit arr be [ 1, 2, 3, 4 ] rn
+
+arr[1] = 5
+
+waffle(arr)
+```
+Arrays start at 0.
+
 ## Comments
-We, at Bussin X, believe comments are redundant. Code must be understandable without English.
+You can write comments like this:
+```rs
+lit x be nocap rn /* comment */
+```
 
 ## Functions
 Functions in programming are intricate entities that serve as modular units of code designed to perform specific tasks with a high degree of abstraction and reusability. These multifaceted constructs encapsulate a series of instructions, often comprising algorithmic operations and logical conditions, which execute a well-defined purpose within a larger program. Functionality is delineated through a meticulously crafted signature, encompassing parameters and return types, allowing for parameterization and value transmission between the calling code and the function body. The complexity further burgeons as functions may exhibit a plethora of characteristics, including but not limited to recursion, closures, and the ability to manipulate variables within their designated scopes. Their utility extends beyond mere procedural decomposition, often intertwining with the paradigms of object-oriented, functional, or imperative programming, depending on the programming language employed. The orchestration of functions, with their nuanced interplay, results in the orchestration of intricate software systems, promoting maintainability, readability, and the efficient allocation of computational resources. In essence, functions epitomize the sophisticated essence of programming, embodying the elegance and subtlety required to navigate the intricacies of algorithmic design and software engineering. You can create functions by using:
