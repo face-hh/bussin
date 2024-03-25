@@ -1,3 +1,4 @@
+
 import { execSync } from 'child_process';
 import request, { HttpVerb } from 'sync-request';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -71,7 +72,7 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
             .set("pi", Math.PI)
             .set("sqrt", MK_NATIVE_FN((args) => {
                 const arg = (args[0] as NumberVal).value;
-                return MK_NUMBER(Math.sqrt(arg))
+                return MK_NUMBER(Math.sqrt(arg));
             }))
             .set("random", MK_NATIVE_FN((args) => {
                 const arg1 = (args[0] as NumberVal).value;
@@ -83,15 +84,15 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
             }))
             .set("round", MK_NATIVE_FN((args) => {
                 const arg = (args[0] as NumberVal).value;
-                return MK_NUMBER(Math.round(arg))
+                return MK_NUMBER(Math.round(arg));
             }))
             .set("ceil", MK_NATIVE_FN((args) => {
                 const arg = (args[0] as NumberVal).value;
-                return MK_NUMBER(Math.ceil(arg))
+                return MK_NUMBER(Math.ceil(arg));
             }))
             .set("abs", MK_NATIVE_FN((args) => {
                 const arg = (args[0] as NumberVal).value;
-                return MK_NUMBER(Math.abs(arg))
+                return MK_NUMBER(Math.abs(arg));
             }))
     ), true)
 
@@ -223,7 +224,7 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
                 obj.set(key, value);
                 return MK_NULL();
             }))
-    ), true)
+    ), true);
 
     env.declareVar("len", MK_NATIVE_FN((args) => {
         const arg = args.shift();
@@ -290,6 +291,7 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
                 return MK_STRING(replaced);
             }))
     ), true);
+	
 
     function closeBussin(): null {
         if(beginTime != -1) {

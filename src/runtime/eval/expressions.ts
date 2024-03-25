@@ -6,6 +6,8 @@ import { NumberVal, RuntimeVal, MK_NULL, ObjectVal, NativeFnValue, FunctionValue
 export function eval_numeric_binary_expr(lhs: RuntimeVal, rhs: RuntimeVal, operator: string): RuntimeVal {
 
     switch(operator) {
+        case "|":
+            return MK_BOOL((lhs as BooleanVal).value || (rhs as BooleanVal).value);
         case "!=":
             return equals(lhs, rhs, false);
         case "==":
@@ -66,10 +68,10 @@ function equals(lhs: RuntimeVal, rhs: RuntimeVal, strict: boolean): RuntimeVal {
 }
 
 export function eval_binary_expr(binop: BinaryExpr, env: Environment): RuntimeVal {
-    const lhs = evaluate(binop.left, env);
-    const rhs = evaluate(binop.right, env);
+    const lhs: RuntimeVal = evaluate(binop.left, env);
+    const rhs: RuntimeVal = evaluate(binop.right, env);
 
-    return eval_numeric_binary_expr(lhs as RuntimeVal, rhs as RuntimeVal, binop.operator);
+    return eval_numeric_binary_expr(lhs, rhs, binop.operator);
 }
 
 export function eval_identifier(ident: Identifier, env: Environment): RuntimeVal {

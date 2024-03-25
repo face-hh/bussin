@@ -99,7 +99,16 @@ export default class Parser {
         this.eat(); // eat if keyword
         this.expect(TokenType.OpenParen, "Opening parenthesis (\"(\") expected following \"if\" statement.");
 
-        const test = this.parse_expr();
+        let test = this.parse_expr();
+ 
+        if(this.at().type == TokenType.And || this.at().type == TokenType.Bar) {
+            test = {
+                kind: "BinaryExpr",
+                left: test,
+                operator: this.eat().value,
+                right: this.parse_expr(),
+            } as BinaryExpr;
+        }
 
         this.expect(TokenType.CloseParen, "Closing parenthesis (\"(\") expected following \"if\" statement.");
 
