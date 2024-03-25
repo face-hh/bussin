@@ -269,9 +269,9 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
                 const string = (args.shift() as StringVal).value;
 
                 const regex = parseRegex((args.shift() as StringVal).value);
-                const matches = string.match(regex).map(val => MK_STRING(val));
+                const matches = string.match(regex);
 
-                return MK_ARRAY(matches);
+                return matches == null ? MK_NULL() : MK_ARRAY(matches.map(val => MK_STRING(val)));
             }))
             .set("replace", MK_NATIVE_FN((args) => {
                 const string = (args.shift() as StringVal).value;
