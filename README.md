@@ -15,11 +15,13 @@ We, at Bussin, believe everyone should be entertained while coding. Meet our alt
 Inside **Bussin X**, you *can* use BS syntax, however, it's recommended to use the **BSX** syntax described below. 
 
 ### New!
-- `import` will import data from another file. `lit db be import("./database.bs") rn`
+- Comments. `lit x be 5 + 10 rn /* this code is bussin */`
+- Arrays! `lit arr be [1,2,3,4] rn`
+- `regex` is available for matching regex. `lit matches be regex.match(string, "/word/g")`
+- `import` will import data from another file. `lit db be import("./database.bsx") rn`
 - `objects` is available for dynamic object keys. `objects.get(obj, yap("Name> "))`
 - `hollup` will create a timeout. `hollup(bruh perform() { waffle("ok") }, 1000)`
 - `yappacino` will create an interval. `yappacino(bruh perform() { waffle("ok") }, 1000)`
-- Object property setting is fixed! `lit obj be {} rn obj.e = nocap waffle(obj)`
 
 ## Variables
 Mutable variables are created with:
