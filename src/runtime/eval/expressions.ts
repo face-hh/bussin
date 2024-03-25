@@ -6,8 +6,10 @@ import { NumberVal, RuntimeVal, MK_NULL, ObjectVal, NativeFnValue, FunctionValue
 export function eval_numeric_binary_expr(lhs: RuntimeVal, rhs: RuntimeVal, operator: string): RuntimeVal {
 
     switch(operator) {
-        case "|":
+        case "|": {
+            if(lhs.type !== "boolean" || rhs.type !== "boolean") return MK_BOOL(false);
             return MK_BOOL((lhs as BooleanVal).value || (rhs as BooleanVal).value);
+        }
         case "!=":
             return equals(lhs, rhs, false);
         case "==":
@@ -15,7 +17,7 @@ export function eval_numeric_binary_expr(lhs: RuntimeVal, rhs: RuntimeVal, opera
         case "&&":
             return equals(lhs, rhs, true);
         default: {
-            if (lhs.type !== 'number' || rhs.type !== 'number') return MK_NULL();
+            if (lhs.type !== 'number' || rhs.type !== 'number') return MK_BOOL(false);
 
             const llhs = lhs as NumberVal;
             const rrhs = rhs as NumberVal;
