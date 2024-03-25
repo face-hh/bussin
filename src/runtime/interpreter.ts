@@ -1,8 +1,8 @@
 import { NumberVal, RuntimeVal, StringVal } from "./values";
-import { AssignmentExpr, BinaryExpr, CallExpr, ForStatement, FunctionDeclaration, Identifier, IfStatement, MemberExpr, NumericLiteral, ObjectLiteral, Program, Stmt, StringLiteral, TryCatchStatement, VarDeclaration } from "../frontend/ast";
+import { ArrayLiteral, AssignmentExpr, BinaryExpr, CallExpr, ForStatement, FunctionDeclaration, Identifier, IfStatement, MemberExpr, NumericLiteral, ObjectLiteral, Program, Stmt, StringLiteral, TryCatchStatement, VarDeclaration } from "../frontend/ast";
 import Environment from "./environment"
 import { eval_function_declaration, eval_program, eval_val_declaration, eval_if_statement, eval_for_statement, eval_try_catch_statement } from "./eval/statements";
-import { eval_identifier, eval_binary_expr, eval_assignment, eval_object_expr, eval_call_expr, eval_member_expr } from "./eval/expressions"
+import { eval_identifier, eval_binary_expr, eval_assignment, eval_object_expr, eval_call_expr, eval_member_expr, eval_array_expr } from "./eval/expressions"
 
 
 export function evaluate(astNode: Stmt, env: Environment, functionCall: boolean = false): RuntimeVal {
@@ -18,6 +18,8 @@ export function evaluate(astNode: Stmt, env: Environment, functionCall: boolean 
             return eval_identifier(astNode as Identifier, env);
         case "ObjectLiteral":
             return eval_object_expr(astNode as ObjectLiteral, env);
+        case "ArrayLiteral":
+            return eval_array_expr(astNode as ArrayLiteral, env);
         case "CallExpr":
             return eval_call_expr(astNode as CallExpr, env);
         case "AssignmentExpr":

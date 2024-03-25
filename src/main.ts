@@ -5,6 +5,7 @@ import { evaluate } from "./runtime/interpreter";
 import * as readline from 'readline/promises';
 import { readFileSync } from "fs";
 import { get_currency, transcribe } from "./utils/transcriber";
+import { MK_STRING } from "./runtime/values";
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -35,13 +36,8 @@ async function run(filename: string) {
         input = transcribe(input, currency);
     }
 
-    const argMap = new Map();
-    args.forEach((value, index) => {
-        argMap.set("v" + index, value);
-    });
-
     const parser = new Parser();
-    const env = createGlobalEnv(args.includes("--time") ? begin : -1, filename.substring(0, filename.lastIndexOf("/") + 1), argMap, currency);
+    const env = createGlobalEnv(args.includes("--time") ? begin : -1, filename.substring(0, filename.lastIndexOf("/") + 1), args.map(value => MK_STRING(value)), currency);
 
     const program = parser.produceAST(input);
     

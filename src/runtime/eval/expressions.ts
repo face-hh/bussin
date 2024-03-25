@@ -1,7 +1,7 @@
-import { AssignmentExpr, BinaryExpr, CallExpr, Identifier, MemberExpr, ObjectLiteral } from "../../frontend/ast";
+import { ArrayLiteral, AssignmentExpr, BinaryExpr, CallExpr, Identifier, MemberExpr, ObjectLiteral } from "../../frontend/ast";
 import Environment from "../environment";
 import { evaluate } from "../interpreter";
-import { NumberVal, RuntimeVal, MK_NULL, ObjectVal, NativeFnValue, FunctionValue, BooleanVal, StringVal, NullVal, MK_NUMBER, MK_BOOL } from "../values";
+import { NumberVal, RuntimeVal, MK_NULL, ObjectVal, NativeFnValue, FunctionValue, BooleanVal, StringVal, NullVal, MK_NUMBER, MK_BOOL, ArrayVal } from "../values";
 
 export function eval_numeric_binary_expr(lhs: RuntimeVal, rhs: RuntimeVal, operator: string): RuntimeVal {
 
@@ -95,6 +95,18 @@ export function eval_object_expr(obj: ObjectLiteral, env: Environment): RuntimeV
         object.properties.set(key, runtimeVal);
     }
     return object;
+}
+
+export function eval_array_expr(obj: ArrayLiteral, env: Environment): RuntimeVal {
+    const array = { type: "array", values: [] } as ArrayVal;
+
+    for(const value of obj.values) {
+        const runtimeVal = evaluate(value, env);
+
+        array.values.push(runtimeVal);
+    }
+
+    return array;
 }
 
 export function eval_function(func: FunctionValue, args: RuntimeVal[]): RuntimeVal {

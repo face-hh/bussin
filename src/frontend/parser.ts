@@ -1,4 +1,4 @@
-import { Stmt, Program, Expr, BinaryExpr, NumericLiteral, Identifier, VarDeclaration, AssignmentExpr, Property, ObjectLiteral, CallExpr, MemberExpr, FunctionDeclaration, StringLiteral, IfStatement, ForStatement, TryCatchStatement } from "./ast";
+import { Stmt, Program, Expr, BinaryExpr, NumericLiteral, Identifier, VarDeclaration, AssignmentExpr, Property, ObjectLiteral, CallExpr, MemberExpr, FunctionDeclaration, StringLiteral, IfStatement, ForStatement, TryCatchStatement, ArrayLiteral } from "./ast";
 import { tokenize, Token, TokenType } from "./lexer";
 
 export default class Parser {
@@ -229,7 +229,7 @@ export default class Parser {
     }
     private parse_object_expr(): Expr {
         if (this.at().type !== TokenType.OpenBrace) {
-            return this.parse_try_catch_expr();
+            return this.parse_array_expr();
         }
 
         this.eat(); // advance past {
@@ -252,18 +252,39 @@ export default class Parser {
             }
             // { key: val }
 
-            this.expect(TokenType.Colon, "Semicolon (\";\") expected following \"identifier\" in \"Object\" expression.");
+            this.expect(TokenType.Colon, "Colon (\":\") expected following \"identifier\" in \"Object\" expression.");
             const value = this.parse_expr();
 
             properties.push({ key, value, kind: "Property" });
 
             if (this.at().type != TokenType.CloseBrace) {
-                this.expect(TokenType.Comma, "Comma (\";\") or closing brace (\"}\") expected after \"property\" declaration.");
+                this.expect(TokenType.Comma, "Comma (\",\") or closing brace (\"}\") expected after \"property\" declaration.");
             }
         }
 
-        this.expect(TokenType.CloseBrace, "Closing brace (\"}\") expected at the end of \"Object\" expression.")
+        this.expect(TokenType.CloseBrace, "Closing brace (\"}\") expected at the end of \"Object\" expression.");
         return { kind: "ObjectLiteral", properties } as ObjectLiteral;
+    }
+
+    private parse_array_expr(): Expr {
+        if(this.at().type !== TokenType.OpenBracket) {
+            return this.parse_try_catch_expr();
+        }
+
+        this.eat(); // advance past [
+
+        const values = new Array<Expr>();
+
+        while (this.not_eof() && this.at().type != TokenType.CloseBracket) {
+            values.push(this.parse_expr());
+
+            if (this.at().type != TokenType.CloseBracket) {
+                this.expect(TokenType.Comma, "Comma (\",\") or closing bracket (\"]\") expected after \"value\" in array.");
+            }
+        }
+
+        this.expect(TokenType.CloseBracket, "Closing Bracket (\"]\") expected at the end of \"Array\" expression.");
+        return { kind: "ArrayLiteral", values } as ArrayLiteral;
     }
 
     private parse_additive_expr(): Expr {

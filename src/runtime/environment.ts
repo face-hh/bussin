@@ -3,15 +3,15 @@ import request, { HttpVerb } from 'sync-request';
 const rl = require('readline-sync')
 import * as fs from 'fs';
 
-import { Identifier, MemberExpr } from '../frontend/ast';
+import { Identifier, MemberExpr, NumericLiteral } from '../frontend/ast';
 import { printValues } from './eval/native-fns';
-import { FunctionValue, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal } from "./values";
+import { ArrayVal, FunctionValue, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, MK_ARRAY, NumberVal, ObjectVal, RuntimeVal, StringVal } from "./values";
 import { eval_function } from './eval/expressions';
 import Parser from '../frontend/parser';
 import { evaluate } from './interpreter';
 import { transcribe } from '../utils/transcriber';
 
-export function createGlobalEnv(beginTime: number = -1, filePath: string = __dirname, args: Map<string, RuntimeVal> = new Map(), currency: string = "-"): Environment {
+export function createGlobalEnv(beginTime: number = -1, filePath: string = __dirname, args: RuntimeVal[] = [], currency: string = "-"): Environment {
     const env = new Environment();
 
     env.declareVar("true", MK_BOOL(true), true);
@@ -19,7 +19,7 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
     env.declareVar("null", MK_NULL(), true);
 
     env.declareVar("error", MK_NULL(), false);
-    env.declareVar("args", MK_OBJECT(args), true)
+    env.declareVar("args", MK_ARRAY(args), true)
 
     // Define a native builtin method
     env.declareVar("println", MK_NATIVE_FN((args) => {
@@ -224,8 +224,15 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
     ), true)
 
     env.declareVar("len", MK_NATIVE_FN((args) => {
-        const string = (args.shift() as StringVal).value;
-        return MK_NUMBER(string.length);
+        const arg = args.shift();
+        switch(arg.type) {
+            case "string":
+                return MK_NUMBER((arg as StringVal).value.length);
+            case "object":
+                return MK_NUMBER((arg as ObjectVal).properties.size);
+            default:
+                throw "Cannot get length of type: " + arg.type;
+        }
     }), true);
 
     env.declareVar("import", MK_NATIVE_FN((args) => {
@@ -263,14 +270,11 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
         new Map()
             .set("match", MK_NATIVE_FN((args) => {
                 const string = (args.shift() as StringVal).value;
-                
+
                 const regex = parseRegex((args.shift() as StringVal).value);
-                const matches = string.match(regex);
+                const matches = string.match(regex).map(val => MK_STRING(val));
 
-                const map = new Map();
-                matches.forEach((match, index) => map.set("v" + index, match));
-
-                return MK_OBJECT(map);
+                return MK_ARRAY(matches);
             }))
             .set("replace", MK_NATIVE_FN((args) => {
                 const string = (args.shift() as StringVal).value;
@@ -348,18 +352,33 @@ export default class Environment {
         const varname = (expr.object as Identifier).symbol;
         const env = this.resolve(varname);
 
-        let pastVal = env.variables.get(varname) as ObjectVal;
+        let pastVal = env.variables.get(varname);
 
-        const prop = property
-            ? property.symbol
-            : (expr.property as Identifier).symbol;
-        const currentProp = (expr.property as Identifier).symbol;
+        switch(pastVal.type) {
+            case "object": {
 
-        if (value) pastVal.properties.set(prop, value);
+                const currentProp = (expr.property as Identifier).symbol;
+                const prop = property ? property.symbol : currentProp;
 
-        if (currentProp) pastVal = (pastVal.properties.get(currentProp) as ObjectVal);
+                if (value) (pastVal as ObjectVal).properties.set(prop, value);
 
-        return pastVal;
+                if (currentProp) pastVal = ((pastVal as ObjectVal).properties.get(currentProp) as ObjectVal);
+
+                return pastVal;
+            }
+            case "array": {
+
+                if(expr.property.kind != "NumericLiteral") throw "Arrays do not have keys: " + expr.property;
+
+                const num = (expr.property as NumericLiteral).value;
+
+                if(value) (pastVal as ArrayVal).values[num] = value;
+
+                return (pastVal as ArrayVal).values[num];
+            }
+            default:
+                throw "Cannot lookup or mutate type: " + pastVal.type;
+        }
     }
 
     public lookupVar(varname: string): RuntimeVal {

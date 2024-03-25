@@ -202,10 +202,12 @@ export function tokenize(sourceCode: string): Token[] {
                             }
                             escaped = false;
                         } else if (escaped) {
+                            escaped = false;
                             if(ESCAPED[key]) {
-                                escaped = false;
                                 str += ESCAPED[key];
                                 continue;
+                            } else {
+                                str += `\\`;
                             }
                         }
                         str += key;

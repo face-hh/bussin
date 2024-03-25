@@ -1,4 +1,4 @@
-import { RuntimeVal, StringVal, NumberVal, BooleanVal, NullVal, ObjectVal, FunctionValue, NativeFnValue } from '../values'
+import { RuntimeVal, StringVal, NumberVal, BooleanVal, NullVal, ObjectVal, FunctionValue, NativeFnValue, ArrayVal } from '../values'
 
 export function printValues(args: Array<RuntimeVal>) {
     for (let i = 0; i < args.length; i++) {
@@ -19,16 +19,21 @@ export function matchType(arg: RuntimeVal) {
         case "null":
             return (arg as NullVal).value;
         case "object":
-            const obj: { [key: string]: any } = {};
+            const obj: { [key: string]: unknown } = {};
             const aObj = arg as ObjectVal;
             aObj.properties.forEach((value, key) => {
                 obj[key] = matchType(value);
             });
-
             return obj;
+        case "array":
+            const arr: unknown[] = [];
+            const aArr = arg as ArrayVal;
+            aArr.values.forEach(value => {
+                arr.push(matchType(value));
+            });
+            return arr;
         case 'fn':
             const fn = arg as FunctionValue;
-
             return {
                 name: fn.name,
                 body: fn.body,
