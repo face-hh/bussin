@@ -26,24 +26,30 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
     env.declareVar("println", MK_NATIVE_FN((args) => {
         printValues(args);
         return MK_NULL();
-    }), true)
+    }), true);
 
     env.declareVar("exec", MK_NATIVE_FN((args) => {
-        const cmd = (args[0] as StringVal).value
+        const cmd = (args.shift() as StringVal).value
 
         const result = execSync(cmd, { encoding: 'utf-8' });
         return MK_STRING(result.trim());
-    }), true)
+    }), true);
 
     env.declareVar("charat", MK_NATIVE_FN((args) => {
-        const str = (args[0] as StringVal).value;
-        const pos = (args[1] as NumberVal).value;
+        const str = (args.shift() as StringVal).value;
+        const pos = (args.shift() as NumberVal).value;
 
         return MK_STRING(str.charAt(pos));
     }), true);
 
+    env.declareVar("trim", MK_NATIVE_FN((args) => {
+        const str = (args.shift() as StringVal).value;
+
+        return MK_STRING(str.trim());
+    }), true);
+
     env.declareVar("input", MK_NATIVE_FN((args) => {
-        const cmd = (args[0] as StringVal).value;
+        const cmd = (args.shift() as StringVal).value;
 
         const result = rl.question(cmd);
         if (result !== null) {
@@ -219,6 +225,8 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
                 return MK_NUMBER((arg as StringVal).value.length);
             case "object":
                 return MK_NUMBER((arg as ObjectVal).properties.size);
+            case "array":
+                return MK_NUMBER((arg as ArrayVal).values.length);
             default:
                 throw "Cannot get length of type: " + arg.type;
         }
@@ -357,9 +365,15 @@ export default class Environment {
             }
             case "array": {
 
-                if(expr.property.kind != "NumericLiteral") throw "Arrays do not have keys: " + expr.property;
+                let num;
 
-                const num = (expr.property as NumericLiteral).value;
+                if(expr.property.kind == "Identifier") {
+                    num = (this.lookupVar((expr.property as Identifier).symbol) as NumberVal).value;
+                } else if (expr.property.kind == "NumericLiteral") {
+                    num = (expr.property as NumericLiteral).value;
+                } else {
+                    throw "Arrays do not have keys: " + expr.property;
+                }
 
                 if(value) (pastVal as ArrayVal).values[num] = value;
 
