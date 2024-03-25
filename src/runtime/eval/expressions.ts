@@ -12,7 +12,7 @@ export function eval_numeric_binary_expr(lhs: RuntimeVal, rhs: RuntimeVal, opera
             return equals(lhs, rhs, true);
         case "&&":
             return equals(lhs, rhs, true);
-        default:
+        default: {
             if (lhs.type !== 'number' || rhs.type !== 'number') return MK_NULL();
 
             const llhs = lhs as NumberVal;
@@ -36,11 +36,12 @@ export function eval_numeric_binary_expr(lhs: RuntimeVal, rhs: RuntimeVal, opera
                 default:
                     throw `Unknown operator provided in operation: ${lhs}, ${rhs}.`
             }
+        }
     }
 }
 
 function equals(lhs: RuntimeVal, rhs: RuntimeVal, strict: boolean): RuntimeVal {
-    const compare = strict ? (a: any, b: any) => a === b : (a: any, b: any) => a !== b;
+    const compare = strict ? (a: unknown, b: unknown) => a === b : (a: unknown, b: unknown) => a !== b;
 
     switch (lhs.type) {
         case 'boolean':

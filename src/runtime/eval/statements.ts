@@ -1,4 +1,4 @@
-import { FunctionDeclaration, IfStatement, Program, Stmt, VarDeclaration, ForStatement, Identifier, TryCatchStatement } from "../../frontend/ast";
+import { FunctionDeclaration, IfStatement, Program, Stmt, VarDeclaration, ForStatement, TryCatchStatement } from "../../frontend/ast";
 import Environment from "../environment";
 import { evaluate } from "../interpreter";
 import { BooleanVal, FunctionValue, MK_NULL, RuntimeVal } from "../values";

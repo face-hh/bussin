@@ -1,4 +1,4 @@
-import { RuntimeVal, StringVal, NumberVal, BooleanVal, NullVal, ObjectVal, FunctionValue, NativeFnValue, ArrayVal } from '../values'
+import { RuntimeVal, StringVal, NumberVal, BooleanVal, NullVal, ObjectVal, FunctionValue, ArrayVal } from '../values'
 
 export function printValues(args: Array<RuntimeVal>) {
     for (let i = 0; i < args.length; i++) {
@@ -39,7 +39,6 @@ export function matchType(arg: RuntimeVal) {
             return fn.name == "<anonymous>" ? `[Function (anonymous)]` : `[Function: ${fn.name}]`; // definitely not stolen from javascript
         }
         case "native-fn": {
-            const fn = arg as NativeFnValue;
             return `[Native Function]`;
         }
         default:
