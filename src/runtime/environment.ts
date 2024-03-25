@@ -4,7 +4,7 @@ import request, { HttpVerb } from 'sync-request';
 const rl = require('readline-sync')
 import * as fs from 'fs';
 
-import { Identifier, MemberExpr, NumericLiteral } from '../frontend/ast';
+import { Identifier, MemberExpr } from '../frontend/ast';
 import { printValues } from './eval/native-fns';
 import { ArrayVal, FunctionValue, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, MK_ARRAY, NumberVal, ObjectVal, RuntimeVal, StringVal } from "./values";
 import { eval_function } from './eval/expressions';
@@ -46,6 +46,13 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
         const str = (args.shift() as StringVal).value;
 
         return MK_STRING(str.trim());
+    }), true);
+
+    env.declareVar("splitstr", MK_NATIVE_FN((args) => {
+        const str = (args.shift() as StringVal).value;
+        const splitat = (args.shift() as StringVal).value;
+
+        return MK_ARRAY(str.split(splitat).map(val => MK_STRING(val)));
     }), true);
 
     env.declareVar("input", MK_NATIVE_FN((args) => {
@@ -365,15 +372,11 @@ export default class Environment {
             }
             case "array": {
 
-                let num;
+                let num: RuntimeVal | number = evaluate(expr.property, this);
 
-                if(expr.property.kind == "Identifier") {
-                    num = (this.lookupVar((expr.property as Identifier).symbol) as NumberVal).value;
-                } else if (expr.property.kind == "NumericLiteral") {
-                    num = (expr.property as NumericLiteral).value;
-                } else {
-                    throw "Arrays do not have keys: " + expr.property;
-                }
+                if(num.type != "number") throw "Arrays do not have keys: " + expr.property;
+
+                num = (num as NumberVal).value;
 
                 if(value) (pastVal as ArrayVal).values[num] = value;
 

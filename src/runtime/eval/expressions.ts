@@ -58,8 +58,10 @@ function equals(lhs: RuntimeVal, rhs: RuntimeVal, strict: boolean): RuntimeVal {
             return MK_BOOL(compare((lhs as NullVal).value, (rhs as NullVal).value));
         case 'object':
             return MK_BOOL(compare((lhs as ObjectVal).properties, (rhs as ObjectVal).properties));
+        case 'array':
+            return MK_BOOL(compare((lhs as ArrayVal).values, (rhs as ArrayVal).values ));
         default:
-            throw `RunTime: Unhandled type in equals function: ${lhs}, ${rhs}`
+            throw `RunTime: Unhandled type in equals function: ${lhs.type}, ${rhs.type}`
     }
 }
 
