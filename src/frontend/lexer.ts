@@ -186,7 +186,7 @@ export function tokenize(sourceCode: string): Token[] {
                         tokens.push(token("!", TokenType.Exclamation));
                     }
                     break;
-                case '"':
+                case '"': {
                     let str = "";
                     src.shift();
         
@@ -216,6 +216,7 @@ export function tokenize(sourceCode: string): Token[] {
                     // append new string token.
                     tokens.push(token(str, TokenType.String));
                     break;
+                }
                 case "-":
                 case "+":
                     if(src[1] == src[0]) {
@@ -229,7 +230,7 @@ export function tokenize(sourceCode: string): Token[] {
                         src.shift();
                         break;
                     }
-                    // no break here to flow into the next case for += and -=
+                // eslint-disable-next-line no-fallthrough
                 case "*":
                 case "/":
                     if (src[1] == "=") {
@@ -262,6 +263,7 @@ export function tokenize(sourceCode: string): Token[] {
                             break;
                         }
                     }
+                // eslint-disable-next-line no-fallthrough
                 default:
 
                     if(tokenType) {

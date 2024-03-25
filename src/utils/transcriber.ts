@@ -1,5 +1,5 @@
-import { readFileSync } from "fs";
 import axios from 'axios';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const geoip = require('geoip-lite');
 
 interface Currency {
@@ -12,7 +12,7 @@ interface Currency {
     };
 }
 
-// @ts-ignore
+// @ts-expect-error It will assign replace_fr on string. It doesn't matter if it doesn't exist already.
 String.prototype.replace_fr = function (target: string, replacement: string): string {
     const pattern = new RegExp(`\\b${target}\\b(?=(?:(?:[^"]*"){2})*[^"]*$)`, 'g');
     
@@ -36,14 +36,14 @@ const rightsideCurrencies = [
     "₴" // Ukrainian Hryvnia
 ];   
 
-// @ts-ignore
+// @ts-expect-error It will assign replace_fr on string. It doesn't matter if it doesn't exist already.
 String.prototype.replace_currency = function (currency: string): string {
     const pattern = new RegExp(`${rightsideCurrencies.includes(currency) ? "{}" + currency : currency + "{}"}`, 'g');
 
     return this.replace(pattern, "${}");
 }
 
-export async function get_currency(currencies: any) {
+export async function get_currency(currencies: Currency[]) {
     const { country } = await get_country();
     const currency = currencies.find((el: Currency) => el.code === country)
 
@@ -60,7 +60,7 @@ async function get_country() {
 
 export function transcribe(code: string, currency: string) {
     return code
-        // @ts-ignore
+        // @ts-expect-error replace_fr is assigned earlier in the code.
         .replace_fr(";", '!')
         .replace_fr("rn", ';')
         .replace_fr("be", '=')
@@ -98,9 +98,9 @@ export function transcribe(code: string, currency: string) {
         .replace_fr("beminus", "-=")
         .replace_fr("betimes", "*=")
         .replace_fr("bedivided", "/=")
-        .replace(/\: number/g, '')
-        .replace(/\: string/g, '')
-        .replace(/\: object/g, '')
-        .replace(/\: boolean/g, '')
+        .replace(/: number/g, '')
+        .replace(/: string/g, '')
+        .replace(/: object/g, '')
+        .replace(/: boolean/g, '')
         .replace_currency(currency);
 }

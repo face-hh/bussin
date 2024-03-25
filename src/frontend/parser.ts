@@ -18,7 +18,7 @@ export default class Parser {
         return prev;
     }
 
-    private expect(type: TokenType, err: any) {
+    private expect(type: TokenType, err: string) {
         const prev = this.tokens.shift() as Token;
         if (!prev || prev.type != type) {
             console.error(`Parser error:\n`, err, prev, "Expecting: ", type);
@@ -426,13 +426,14 @@ export default class Parser {
                 } as StringLiteral;
             case TokenType.Fn:
                 return this.parse_function_declaration();
-            case TokenType.OpenParen:
+            case TokenType.OpenParen: {
                 this.eat(); // eat the opening paren
                 const value = this.parse_expr();
 
                 this.expect(TokenType.CloseParen, "Unexpected token (?) found while parsing arguments."); // closing paren
 
                 return value;
+            }
             default:
                 console.error("Unexpected token found during parsing!", this.at());
                 process.exit(1);

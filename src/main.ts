@@ -50,16 +50,16 @@ async function repl() {
 
     console.log("Repl v1.0 (Bussin)");
 
-    while (true) {
-        const input = await rl.question("> ");
+    const input = await rl.question("> ");
 
-        const program = parser.produceAST(input);
+    const program = parser.produceAST(input);
 
-        try {
-            const result = evaluate(program, env);
-            console.log(result);
-        } catch(err) {
-            console.log(err);
-        }
+    try {
+        const result = evaluate(program, env);
+        console.log(result);
+    } catch(err) {
+        console.log(err);
     }
+
+    repl();
 }

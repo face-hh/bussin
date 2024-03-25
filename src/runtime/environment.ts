@@ -1,5 +1,6 @@
 import { execSync } from 'child_process';
 import request, { HttpVerb } from 'sync-request';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const rl = require('readline-sync')
 import * as fs from 'fs';
 
@@ -30,37 +31,25 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
     env.declareVar("exec", MK_NATIVE_FN((args) => {
         const cmd = (args[0] as StringVal).value
 
-        try {
-            const result = execSync(cmd, { encoding: 'utf-8' });
-            return MK_STRING(result.trim());
-        } catch (error) {
-            throw error;
-        }
+        const result = execSync(cmd, { encoding: 'utf-8' });
+        return MK_STRING(result.trim());
     }), true)
 
     env.declareVar("charat", MK_NATIVE_FN((args) => {
         const str = (args[0] as StringVal).value;
         const pos = (args[1] as NumberVal).value;
 
-        try {
-            return MK_STRING(str.charAt(pos));
-        } catch (error) {
-            throw error;
-        }
+        return MK_STRING(str.charAt(pos));
     }), true);
 
     env.declareVar("input", MK_NATIVE_FN((args) => {
         const cmd = (args[0] as StringVal).value;
 
-        try {
-            const result = rl.question(cmd);
-            if (result !== null) {
-                return MK_STRING(result);
-            } else {
-                return MK_NULL();
-            }
-        } catch (error) {
-            throw error;
+        const result = rl.question(cmd);
+        if (result !== null) {
+            return MK_STRING(result);
+        } else {
+            return MK_NULL();
         }
     }), true);
 
@@ -314,7 +303,7 @@ export default class Environment {
     private constants: Set<string>;
 
     constructor(parentENV?: Environment) {
-        const global = parentENV ? true : false;
+        //const global = parentENV ? true : false;
 
         this.parent = parentENV;
         this.variables = new Map();
