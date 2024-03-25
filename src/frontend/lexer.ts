@@ -258,7 +258,7 @@ export function tokenize(sourceCode: string): Token[] {
                         } else if (src[1] == "/") {
                             do {
                                 src.shift();
-                            } while ((src[0] as string) != "\n"); // fuck off typescript
+                            } while (src.length > 0 && (src[0] as string) != "\n"); // fuck off typescript
                             src.shift();
                             break;
                         }
