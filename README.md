@@ -100,7 +100,10 @@ Arrays start at 0.
 ## Comments
 You can write comments like this:
 ```rs
-lit x be nocap rn /* comment */
+lit x be nocap rn // does stuff
+/*
+multi line
+*/
 ```
 
 ## Functions

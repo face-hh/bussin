@@ -241,18 +241,26 @@ export function tokenize(sourceCode: string): Token[] {
                         tokens.push(token(src.shift(), TokenType.BinaryOperator));
                         src.shift();
                         break;
-                    } else if (src[0] == "/" && src[1] == "*") {
-                        let lastVal = "";
-                        while(src.length > 0) {
-                            const nextVal = src.shift();
+                    } else if (src[0] == "/") {
+                        if(src[1] == "*") {
+                            let lastVal = "";
+                            while(src.length > 0) {
+                                const nextVal = src.shift();
 
-                            if(lastVal == "*" && nextVal == "/") {
-                                break;
+                                if(lastVal == "*" && nextVal == "/") {
+                                    break;
+                                }
+
+                                lastVal = nextVal;
                             }
-
-                            lastVal = nextVal;
+                            break;
+                        } else if (src[1] == "/") {
+                            do {
+                                src.shift();
+                            } while ((src[0] as string) != "\n"); // fuck off typescript
+                            src.shift();
+                            break;
                         }
-                        break;
                     }
                 default:
 
