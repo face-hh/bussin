@@ -20,7 +20,7 @@ export function eval_val_declaration(declaration: VarDeclaration, env: Environme
     return env.declareVar(declaration.identifier, value, declaration.constant);
 }
 
-export function eval_function_declaration(declaration: FunctionDeclaration, env: Environment, functionCall: boolean): RuntimeVal {
+export function eval_function_declaration(declaration: FunctionDeclaration, env: Environment): RuntimeVal {
     // Create new function scope
     const fn = {
         type: "fn",
@@ -30,7 +30,7 @@ export function eval_function_declaration(declaration: FunctionDeclaration, env:
         body: declaration.body,
     } as FunctionValue;
 
-    return functionCall ? fn : env.declareVar(declaration.name, fn, true);
+    return declaration.name == "<anonymous>" ? fn : env.declareVar(declaration.name, fn, true);
 }
 
 export function eval_if_statement(declaration: IfStatement, env: Environment): RuntimeVal {

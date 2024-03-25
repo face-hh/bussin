@@ -5,7 +5,7 @@ import { eval_function_declaration, eval_program, eval_val_declaration, eval_if_
 import { eval_identifier, eval_binary_expr, eval_assignment, eval_object_expr, eval_call_expr, eval_member_expr, eval_array_expr } from "./eval/expressions"
 
 
-export function evaluate(astNode: Stmt, env: Environment, functionCall: boolean = false): RuntimeVal {
+export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
     switch (astNode.kind) {
 
         case "Program":
@@ -39,7 +39,7 @@ export function evaluate(astNode: Stmt, env: Environment, functionCall: boolean 
         case "VarDeclaration":
             return eval_val_declaration(astNode as VarDeclaration, env);
         case "FunctionDeclaration":
-            return eval_function_declaration(astNode as FunctionDeclaration, env, functionCall);
+            return eval_function_declaration(astNode as FunctionDeclaration, env);
             
         default:
             console.error("This AST node has not yet been setup for interpretation", astNode);

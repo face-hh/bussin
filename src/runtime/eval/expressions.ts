@@ -131,7 +131,7 @@ export function eval_function(func: FunctionValue, args: RuntimeVal[]): RuntimeV
 }
 
 export function eval_call_expr(expr: CallExpr, env: Environment): RuntimeVal {
-    const args = expr.args.map(arg => evaluate(arg, env, true));
+    const args = expr.args.map(arg => evaluate(arg, env));
     const fn = evaluate(expr.caller, env);
 
     if (fn.type == "native-fn") {

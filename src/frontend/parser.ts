@@ -127,7 +127,7 @@ export default class Parser {
 
     parse_function_declaration(): Stmt {
         this.eat(); // eat fn keyword
-        const name = this.expect(TokenType.Identifier, "Function name expected following \"fn\" statement.").value;
+        const name = this.at().type == TokenType.Identifier ? this.eat().value : "<anonymous>";
 
         const args = this.parse_args();
         const params: string[] = [];

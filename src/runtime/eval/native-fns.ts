@@ -18,27 +18,30 @@ export function matchType(arg: RuntimeVal) {
             return (arg as BooleanVal).value;
         case "null":
             return (arg as NullVal).value;
-        case "object":
+        case "object": {
             const obj: { [key: string]: unknown } = {};
             const aObj = arg as ObjectVal;
             aObj.properties.forEach((value, key) => {
                 obj[key] = matchType(value);
             });
             return obj;
-        case "array":
+        }
+        case "array": {
             const arr: unknown[] = [];
             const aArr = arg as ArrayVal;
             aArr.values.forEach(value => {
                 arr.push(matchType(value));
             });
             return arr;
-        case 'fn':
+        }
+        case 'fn': {
             const fn = arg as FunctionValue;
-            return {
-                name: fn.name,
-                body: fn.body,
-                internal: false,
-            }
+            return fn.name == "<anonymous>" ? `[Function (anonymous)]` : `[Function: ${fn.name}]`; // definitely not stolen from javascript
+        }
+        case "native-fn": {
+            const fn = arg as NativeFnValue;
+            return `[Native Function]`;
+        }
         default:
             return arg;
     }
