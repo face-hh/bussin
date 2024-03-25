@@ -1,4 +1,4 @@
-import { FunctionDeclaration, IfStatement, Program, Stmt, VarDeclaration, ForStatement, Identifier, TryCatchStatement } from "../../frontend/ast";
+import { FunctionDeclaration, IfStatement, Program, Stmt, VarDeclaration, ForStatement, TryCatchStatement } from "../../frontend/ast";
 import Environment from "../environment";
 import { evaluate } from "../interpreter";
 import { BooleanVal, FunctionValue, MK_NULL, RuntimeVal } from "../values";
@@ -20,7 +20,7 @@ export function eval_val_declaration(declaration: VarDeclaration, env: Environme
     return env.declareVar(declaration.identifier, value, declaration.constant);
 }
 
-export function eval_function_declaration(declaration: FunctionDeclaration, env: Environment, functionCall: boolean): RuntimeVal {
+export function eval_function_declaration(declaration: FunctionDeclaration, env: Environment): RuntimeVal {
     // Create new function scope
     const fn = {
         type: "fn",
@@ -30,7 +30,7 @@ export function eval_function_declaration(declaration: FunctionDeclaration, env:
         body: declaration.body,
     } as FunctionValue;
 
-    return functionCall ? fn : env.declareVar(declaration.name, fn, true);
+    return declaration.name == "<anonymous>" ? fn : env.declareVar(declaration.name, fn, true);
 }
 
 export function eval_if_statement(declaration: IfStatement, env: Environment): RuntimeVal {
@@ -77,8 +77,8 @@ export function eval_for_statement(declaration: ForStatement, env: Environment):
     if ((test as BooleanVal).value !== true) return MK_NULL(); // The loop didn't start
 
     do {
-        eval_assignment(update, env);
         eval_body(body, new Environment(env), false);
+        eval_assignment(update, env);
 
         test = evaluate(declaration.test, env);
     } while ((test as BooleanVal).value);
