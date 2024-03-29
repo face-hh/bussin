@@ -83,7 +83,7 @@ export default class Parser {
 
         const update = this.parse_assignment_expr();
 
-        this.expect(TokenType.CloseParen, "Closing parenthesis (\"(\") expected following \"additive expression\" in \"for\" statement.");
+        this.expect(TokenType.CloseParen, "Closing parenthesis (\")\") expected following \"additive expression\" in \"for\" statement.");
 
         const body = this.parse_block_statement();
 
@@ -101,7 +101,7 @@ export default class Parser {
 
         const test = this.parse_expr();
 
-        this.expect(TokenType.CloseParen, "Closing parenthesis (\"(\") expected following \"if\" statement.");
+        this.expect(TokenType.CloseParen, "Closing parenthesis (\")\") expected following \"if\" statement.");
 
         const body = this.parse_block_statement();
 
