@@ -186,7 +186,7 @@ export function tokenize(sourceCode: string): Token[] {
                         tokens.push(token("!", TokenType.Exclamation));
                     }
                     break;
-                case '"':
+                case '"': {
                     let str = "";
                     src.shift();
         
@@ -202,10 +202,12 @@ export function tokenize(sourceCode: string): Token[] {
                             }
                             escaped = false;
                         } else if (escaped) {
+                            escaped = false;
                             if(ESCAPED[key]) {
-                                escaped = false;
                                 str += ESCAPED[key];
                                 continue;
+                            } else {
+                                str += `\\`;
                             }
                         }
                         str += key;
@@ -214,6 +216,7 @@ export function tokenize(sourceCode: string): Token[] {
                     // append new string token.
                     tokens.push(token(str, TokenType.String));
                     break;
+                }
                 case "-":
                 case "+":
                     if(src[1] == src[0]) {
@@ -227,7 +230,7 @@ export function tokenize(sourceCode: string): Token[] {
                         src.shift();
                         break;
                     }
-                    // no break here to flow into the next case for += and -=
+                // eslint-disable-next-line no-fallthrough
                 case "*":
                 case "/":
                     if (src[1] == "=") {
@@ -239,7 +242,28 @@ export function tokenize(sourceCode: string): Token[] {
                         tokens.push(token(src.shift(), TokenType.BinaryOperator));
                         src.shift();
                         break;
+                    } else if (src[0] == "/") {
+                        if(src[1] == "*") {
+                            let lastVal = "";
+                            while(src.length > 0) {
+                                const nextVal = src.shift();
+
+                                if(lastVal == "*" && nextVal == "/") {
+                                    break;
+                                }
+
+                                lastVal = nextVal;
+                            }
+                            break;
+                        } else if (src[1] == "/") {
+                            do {
+                                src.shift();
+                            } while (src.length > 0 && (src[0] as string) != "\n"); // fuck off typescript
+                            src.shift();
+                            break;
+                        }
                     }
+                // eslint-disable-next-line no-fallthrough
                 default:
 
                     if(tokenType) {

@@ -15,11 +15,14 @@ We, at Bussin, believe everyone should be entertained while coding. Meet our alt
 Inside **Bussin X**, you *can* use BS syntax, however, it's recommended to use the **BSX** syntax described below. 
 
 ### New!
-- `import` will import data from another file. `lit db be import("./database.bs") rn`
+- More math. `math.e`, `math.toString(5)`, `math.toNumber("5")`
+- More string functions. `trim("  Hello  ")`, `splitstr("Hello,There", ",")`
+- Comments. `lit x be 5 + 10 rn /* this code is bussin */`
+- Arrays! `lit arr be [1,2,3,4] rn`
+- `regex` is available for matching regex. `lit matches be regex.match(string, "/word/g")`
+- `import` will import data from another file. `lit db be import("./database.bsx") rn`
+- `fetch` for fetching websites. `lit x be fetch("https://example.com/") rn`
 - `objects` is available for dynamic object keys. `objects.get(obj, yap("Name> "))`
-- `hollup` will create a timeout. `hollup(bruh perform() { waffle("ok") }, 1000)`
-- `yappacino` will create an interval. `yappacino(bruh perform() { waffle("ok") }, 1000)`
-- Object property setting is fixed! `lit obj be {} rn obj.e = nocap waffle(obj)`
 
 ## Variables
 Mutable variables are created with:
@@ -50,9 +53,14 @@ waffle(format("Hello, ${}", "World"))
 However, you must use your regional currency symbol.
 ```rs
 waffle(format("Hello, ${}", "World"))
-waffle(format("Hello, €{}", "World"))
-waffle(format("Hello, £{}", "World"))
 waffle(format("Hello, ¥{}", "World"))
+waffle(format("Hello, {}€", "World"))
+waffle(format("Hello, {}£", "World"))
+```
+You can also use bussin's helper functions to simplify your experience:
+```rs
+lit x be trim(" hello ") rn
+lit y be splitstr("Hello,World", ",") rn
 ```
 
 ### Numbers
@@ -85,9 +93,24 @@ obj.key be cap
 waffle(obj.key)
 ```
 ### Arrays
-We, at Bussin X, believe arrays are redundant.
+Arrays contain information without needing keys. Bussin X has them as well:
+```rs
+lit arr be [ 1, 2, 3, 4 ] rn
+
+arr[1] = 5
+
+waffle(arr)
+```
+Arrays start at 0.
+
 ## Comments
-We, at Bussin X, believe comments are redundant. Code must be understandable without English.
+You can write comments like this:
+```rs
+lit x be nocap rn // does stuff
+/*
+multi line
+*/
+```
 
 ## Functions
 Functions in programming are intricate entities that serve as modular units of code designed to perform specific tasks with a high degree of abstraction and reusability. These multifaceted constructs encapsulate a series of instructions, often comprising algorithmic operations and logical conditions, which execute a well-defined purpose within a larger program. Functionality is delineated through a meticulously crafted signature, encompassing parameters and return types, allowing for parameterization and value transmission between the calling code and the function body. The complexity further burgeons as functions may exhibit a plethora of characteristics, including but not limited to recursion, closures, and the ability to manipulate variables within their designated scopes. Their utility extends beyond mere procedural decomposition, often intertwining with the paradigms of object-oriented, functional, or imperative programming, depending on the programming language employed. The orchestration of functions, with their nuanced interplay, results in the orchestration of intricate software systems, promoting maintainability, readability, and the efficient allocation of computational resources. In essence, functions epitomize the sophisticated essence of programming, embodying the elegance and subtlety required to navigate the intricacies of algorithmic design and software engineering. You can create functions by using:
@@ -105,13 +128,13 @@ bruh perform(x, y) {
 ```
 You can also run the function after a specified timespan:
 ```rs
-hollup(bruh perform() {
+hollup(bruh() {
     waffle("A second later...")
 }, 1000)
 ```
 And you can also make it run at an interval:
 ```rs
-yappacino(bruh perform() {
+yappacino(bruh() {
     waffle("Spam!!!")
 }, 1000)
 ```
@@ -187,12 +210,18 @@ You can utilize the `math` helper by using:
 waffle(nerd.random())
 waffle(nerd.sqrt(144))
 waffle(nerd.pi)
+waffle(nerd.e)
 ```
 We also added helper functions for your anxiety:
 ```rs
 waffle(nerd.ceil(3.4))
 waffle(nerd.round(3.9))
 waffle(nerd.abs(-2))
+```
+Want to convert some number types?
+```rs
+lit x be math.toString(5) rn
+lit y be math.toNumber("5") rn
 ```
 You can also simplify your math equations:
 ```rs
@@ -215,19 +244,45 @@ lit stuff be import("./stuff.bsx") rn
 
 The last value emitted in a file will be the exported data:
 ```rs
-bruh printStuff() {
+bruh waffleStuff() {
     waffle("Bussin X")
 }
-bruh printStuff2() {
+bruh waffleStuff2() {
     waffle("Also Bussin X")
 }
 
 {
-    printStuff,
-    printStuff2
+    waffleStuff,
+    waffleStuff2
 }
 ```
-If imported, the result will be an object which you can do obj.printStuff and obj.printStuff2
+If imported, the result will be an object which you can do obj.waffleStuff and obj.waffleStuff2
+
+### Fetch
+You can fetch websites like this:
+```rs
+lit res be fetch("https://example.com/") rn
+```
+You can also set the method, body, and content type like this:
+```rs
+lit res be fetch("https://example.com/", { method: "POST", body: "{\"bussin\":\"x\"}", content_type: "application/json" })
+```
+
+### Regex
+You can use regex like this:
+```rs
+lit string be "Hello World" rn
+
+lit matches be regex.match(string, "/World/g") rn
+
+waffle(matches) /* [ 'World' ] */
+```
+And this:
+```rs
+lit string be "Hello World" rn
+
+waffle(regex.replace(string, "/World/g", "Everybody")) /* Hello Everybody */
+```
 
 ### Exit
 You can exit your program like this:

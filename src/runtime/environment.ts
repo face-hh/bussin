@@ -1,17 +1,19 @@
+
 import { execSync } from 'child_process';
 import request, { HttpVerb } from 'sync-request';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const rl = require('readline-sync')
 import * as fs from 'fs';
 
 import { Identifier, MemberExpr } from '../frontend/ast';
 import { printValues } from './eval/native-fns';
-import { FunctionValue, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, NumberVal, ObjectVal, RuntimeVal, StringVal } from "./values";
+import { ArrayVal, FunctionValue, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, MK_ARRAY, NumberVal, ObjectVal, RuntimeVal, StringVal } from "./values";
 import { eval_function } from './eval/expressions';
 import Parser from '../frontend/parser';
 import { evaluate } from './interpreter';
 import { transcribe } from '../utils/transcriber';
 
-export function createGlobalEnv(beginTime: number = -1, filePath: string = __dirname, args: Map<string, RuntimeVal> = new Map(), currency: string = "-"): Environment {
+export function createGlobalEnv(beginTime: number = -1, filePath: string = __dirname, args: RuntimeVal[] = [], currency: string = "-"): Environment {
     const env = new Environment();
 
     env.declareVar("true", MK_BOOL(true), true);
@@ -19,57 +21,59 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
     env.declareVar("null", MK_NULL(), true);
 
     env.declareVar("error", MK_NULL(), false);
-    env.declareVar("args", MK_OBJECT(args), true)
+    env.declareVar("args", MK_ARRAY(args), true)
 
     // Define a native builtin method
     env.declareVar("println", MK_NATIVE_FN((args) => {
         printValues(args);
         return MK_NULL();
-    }), true)
+    }), true);
 
     env.declareVar("exec", MK_NATIVE_FN((args) => {
-        const cmd = (args[0] as StringVal).value
+        const cmd = (args.shift() as StringVal).value
 
-        try {
-            const result = execSync(cmd, { encoding: 'utf-8' });
-            return MK_STRING(result.trim());
-        } catch (error) {
-            throw error;
-        }
-    }), true)
+        const result = execSync(cmd, { encoding: 'utf-8' });
+        return MK_STRING(result.trim());
+    }), true);
 
     env.declareVar("charat", MK_NATIVE_FN((args) => {
-        const str = (args[0] as StringVal).value;
-        const pos = (args[1] as NumberVal).value;
+        const str = (args.shift() as StringVal).value;
+        const pos = (args.shift() as NumberVal).value;
 
-        try {
-            return MK_STRING(str.charAt(pos));
-        } catch (error) {
-            throw error;
-        }
+        return MK_STRING(str.charAt(pos));
+    }), true);
+
+    env.declareVar("trim", MK_NATIVE_FN((args) => {
+        const str = (args.shift() as StringVal).value;
+
+        return MK_STRING(str.trim());
+    }), true);
+
+    env.declareVar("splitstr", MK_NATIVE_FN((args) => {
+        const str = (args.shift() as StringVal).value;
+        const splitat = (args.shift() as StringVal).value;
+
+        return MK_ARRAY(str.split(splitat).map(val => MK_STRING(val)));
     }), true);
 
     env.declareVar("input", MK_NATIVE_FN((args) => {
-        const cmd = (args[0] as StringVal).value;
+        const cmd = (args.shift() as StringVal).value;
 
-        try {
-            const result = rl.question(cmd);
-            if (result !== null) {
-                return MK_STRING(result);
-            } else {
-                return MK_NULL();
-            }
-        } catch (error) {
-            throw error;
+        const result = rl.question(cmd);
+        if (result !== null) {
+            return MK_STRING(result);
+        } else {
+            return MK_NULL();
         }
     }), true);
 
     env.declareVar("math", MK_OBJECT(
         new Map()
             .set("pi", Math.PI)
+            .set("e", Math.E)
             .set("sqrt", MK_NATIVE_FN((args) => {
                 const arg = (args[0] as NumberVal).value;
-                return MK_NUMBER(Math.sqrt(arg))
+                return MK_NUMBER(Math.sqrt(arg));
             }))
             .set("random", MK_NATIVE_FN((args) => {
                 const arg1 = (args[0] as NumberVal).value;
@@ -81,15 +85,24 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
             }))
             .set("round", MK_NATIVE_FN((args) => {
                 const arg = (args[0] as NumberVal).value;
-                return MK_NUMBER(Math.round(arg))
+                return MK_NUMBER(Math.round(arg));
             }))
             .set("ceil", MK_NATIVE_FN((args) => {
                 const arg = (args[0] as NumberVal).value;
-                return MK_NUMBER(Math.ceil(arg))
+                return MK_NUMBER(Math.ceil(arg));
             }))
             .set("abs", MK_NATIVE_FN((args) => {
                 const arg = (args[0] as NumberVal).value;
-                return MK_NUMBER(Math.abs(arg))
+                return MK_NUMBER(Math.abs(arg));
+            }))
+            .set("toString", MK_NATIVE_FN((args) => {
+                const arg = (args[0] as NumberVal).value;
+                return MK_STRING(arg.toString());
+            }))
+            .set("toNumber", MK_NATIVE_FN((args) => {
+                const arg = (args[0] as StringVal).value;
+                const number = parseFloat(arg);
+                return MK_NUMBER(number);
             }))
     ), true)
 
@@ -154,8 +167,9 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
     
         const method = options == undefined ? "GET" : (options.properties.get("method") as StringVal)?.value ?? "GET";
         const body = options == undefined ? null : (options.properties.get("body") as StringVal)?.value ?? null;
-    
-        const res = request(method as HttpVerb, url.value, { body });
+        const content_type = options == undefined ? "text/plain" : (options.properties.get("content_type") as StringVal)?.value ?? "text/plain";
+
+        const res = request(method as HttpVerb, url.value, { body: body, headers: { "content-type": content_type } });
         if (res.statusCode !== 200) {
             throw new Error("Failed to fetch data: " + res.body.toString('utf8'));
         }
@@ -220,11 +234,20 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
                 obj.set(key, value);
                 return MK_NULL();
             }))
-    ), true)
+    ), true);
 
     env.declareVar("len", MK_NATIVE_FN((args) => {
-        const string = (args.shift() as StringVal).value;
-        return MK_NUMBER(string.length);
+        const arg = args.shift();
+        switch(arg.type) {
+            case "string":
+                return MK_NUMBER((arg as StringVal).value.length);
+            case "object":
+                return MK_NUMBER((arg as ObjectVal).properties.size);
+            case "array":
+                return MK_NUMBER((arg as ArrayVal).values.length);
+            default:
+                throw "Cannot get length of type: " + arg.type;
+        }
     }), true);
 
     env.declareVar("import", MK_NATIVE_FN((args) => {
@@ -243,6 +266,42 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
 
         return evaluate(program, env); // this will evaluate and return the last value emitted. neat
     }), true);
+
+    function parseRegex(regex: string): RegExp {
+        const split = regex.split("/");
+        if(split.length < 3) throw "Invalid regex: " + regex;
+
+        split.shift(); // remove empty
+
+        const flags = split[split.length - 1];
+
+        const full = split.join("/");
+        const pattern = full.substring(0, full.length - (flags.length + 1));
+
+        return new RegExp(pattern, flags);
+    }
+
+    env.declareVar("regex", MK_OBJECT(
+        new Map()
+            .set("match", MK_NATIVE_FN((args) => {
+                const string = (args.shift() as StringVal).value;
+
+                const regex = parseRegex((args.shift() as StringVal).value);
+                const matches = string.match(regex);
+
+                return matches == null ? MK_NULL() : MK_ARRAY(matches.map(val => MK_STRING(val)));
+            }))
+            .set("replace", MK_NATIVE_FN((args) => {
+                const string = (args.shift() as StringVal).value;
+                const regex = parseRegex((args.shift() as StringVal).value);
+
+                const replaceValue = (args.shift() as StringVal).value;
+                const replaced = string.replace(regex, replaceValue);
+                
+                return MK_STRING(replaced);
+            }))
+    ), true);
+	
 
     function closeBussin(): null {
         if(beginTime != -1) {
@@ -271,7 +330,7 @@ export default class Environment {
     private constants: Set<string>;
 
     constructor(parentENV?: Environment) {
-        const global = parentENV ? true : false;
+        //const global = parentENV ? true : false;
 
         this.parent = parentENV;
         this.variables = new Map();
@@ -309,18 +368,35 @@ export default class Environment {
         const varname = (expr.object as Identifier).symbol;
         const env = this.resolve(varname);
 
-        let pastVal = env.variables.get(varname) as ObjectVal;
+        let pastVal = env.variables.get(varname);
 
-        const prop = property
-            ? property.symbol
-            : (expr.property as Identifier).symbol;
-        const currentProp = (expr.property as Identifier).symbol;
+        switch(pastVal.type) {
+            case "object": {
 
-        if (value) pastVal.properties.set(prop, value);
+                const currentProp = (expr.property as Identifier).symbol;
+                const prop = property ? property.symbol : currentProp;
 
-        if (currentProp) pastVal = (pastVal.properties.get(currentProp) as ObjectVal);
+                if (value) (pastVal as ObjectVal).properties.set(prop, value);
 
-        return pastVal;
+                if (currentProp) pastVal = ((pastVal as ObjectVal).properties.get(currentProp) as ObjectVal);
+
+                return pastVal;
+            }
+            case "array": {
+
+                let num: RuntimeVal | number = evaluate(expr.property, this);
+
+                if(num.type != "number") throw "Arrays do not have keys: " + expr.property;
+
+                num = (num as NumberVal).value;
+
+                if(value) (pastVal as ArrayVal).values[num] = value;
+
+                return (pastVal as ArrayVal).values[num];
+            }
+            default:
+                throw "Cannot lookup or mutate type: " + pastVal.type;
+        }
     }
 
     public lookupVar(varname: string): RuntimeVal {
