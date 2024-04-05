@@ -4,6 +4,8 @@ import request, { HttpVerb } from 'sync-request';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const rl = require('readline-sync')
 import * as fs from 'fs';
+import { WebSocket } from 'ws';
+import UserAgent = require('user-agents');
 
 import { Identifier, MemberExpr } from '../frontend/ast';
 import { printValues } from './eval/native-fns';
@@ -41,6 +43,13 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
         const pos = (args.shift() as NumberVal).value;
 
         return MK_STRING(str.charAt(pos));
+    }), true);
+
+    env.declareVar("startsWith", MK_NATIVE_FN((args) => {
+        const str = (args.shift() as StringVal).value;
+        const str2 = (args.shift() as StringVal).value;
+
+        return MK_BOOL(str.startsWith(str2));
     }), true);
 
     env.declareVar("trim", MK_NATIVE_FN((args) => {
@@ -95,16 +104,13 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
                 const arg = (args[0] as NumberVal).value;
                 return MK_NUMBER(Math.abs(arg));
             }))
-            .set("toString", MK_NATIVE_FN((args) => {
-                const arg = (args[0] as NumberVal).value;
-                return MK_STRING(arg.toString());
-            }))
-            .set("toNumber", MK_NATIVE_FN((args) => {
-                const arg = (args[0] as StringVal).value;
-                const number = parseFloat(arg);
-                return MK_NUMBER(number);
-            }))
     ), true)
+
+    env.declareVar("parseNumber", MK_NATIVE_FN((args) => {
+        const arg = (args[0] as StringVal).value;
+        const number = parseFloat(arg);
+        return MK_NUMBER(number);
+    }), true);
 
     env.declareVar("strcon", MK_NATIVE_FN((args,) => {
         let res = '';
@@ -136,29 +142,59 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
 
     env.declareVar("time", MK_NATIVE_FN(() => MK_NUMBER(Date.now())), true);
 
-    let timeoutDepth = 0;
+    let waitDepth = 0;
     let shouldExit = false;
 
+    const timeoutIds: {[key: number]: NodeJS.Timeout} = {};
+
+    function generateTimeoutId(tm: NodeJS.Timeout): number {
+        let id: number;
+        do {
+            id = Math.floor(Math.random() * 999999);
+        } while (timeoutIds[id] != null)
+        timeoutIds[id] = tm;
+        return id;
+    }
+    
     env.declareVar("setTimeout", MK_NATIVE_FN((args) => {
         const func = args.shift() as FunctionValue;
         const time = args.shift() as NumberVal;
-        timeoutDepth++;
-        setTimeout(() => {
+        waitDepth++;
+        const tm = setTimeout(() => {
             eval_function(func, []); // No args can be present here, as none are able to be given.
-            timeoutDepth--;
-            if(timeoutDepth == 0 && shouldExit) {
+            waitDepth--;
+            if(waitDepth == 0 && shouldExit) {
                 process.exit();
             }
         }, time.value);
-        return MK_NULL();
+        return MK_NUMBER(generateTimeoutId(tm));
     }), true);
 
     env.declareVar("setInterval", MK_NATIVE_FN((args) => {
         const func = args.shift() as FunctionValue;
         const time = args.shift() as NumberVal;
-        timeoutDepth = Infinity; // Intervals won't end so...
-        setInterval(() => eval_function(func, []), time.value); // No args can be present here, as none are able to be given.
-        return MK_NULL();
+        waitDepth++;
+        const iv = setInterval(() => eval_function(func, []), time.value); // No args can be present here, as none are able to be given.
+        return MK_NUMBER(generateTimeoutId(iv));
+    }), true);
+
+    env.declareVar("clearTimeout", MK_NATIVE_FN((args) => {
+        const id = args.shift() as NumberVal;
+        if(timeoutIds[id.value]) {
+            clearTimeout(timeoutIds[id.value]);
+            waitDepth--;
+            return MK_BOOL();
+        }
+        return MK_BOOL(false);
+    }), true);
+    env.declareVar("clearInterval", MK_NATIVE_FN((args) => {
+        const id = args.shift() as NumberVal;
+        if(timeoutIds[id.value]) {
+            clearInterval(timeoutIds[id.value]);
+            waitDepth--;
+            return MK_BOOL();
+        }
+        return MK_BOOL(false);
     }), true);
 
     env.declareVar("fetch", MK_NATIVE_FN((args) => {
@@ -175,6 +211,50 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
         }
     
         return MK_STRING(res.body.toString('utf8'));
+    }), true);
+
+    env.declareVar("websocket", MK_NATIVE_FN((args) => {
+        const url = args.shift() as StringVal;
+
+        const ua = (new UserAgent()).toString();
+        const ws = new WebSocket(url.value, { headers: { "user-agent": ua } });
+
+        waitDepth++;
+        ws.addEventListener("close", () => {
+            waitDepth--;
+            if(waitDepth == 0 && shouldExit) {
+                process.exit();
+            }
+        });
+
+        return MK_OBJECT(
+            new Map()
+                .set("onmessage", MK_NATIVE_FN((args) => {
+                    const fn = args.shift() as FunctionValue;
+                    ws.onmessage = (event) => eval_function(fn, [MK_STRING(event.data.toString())]);
+                    return MK_NULL();
+                }))
+                .set("onopen", MK_NATIVE_FN((args) => {
+                    const fn = args.shift() as FunctionValue;
+                    ws.onopen = () => eval_function(fn, []);
+                    return MK_NULL();
+                }))
+                .set("onclose", MK_NATIVE_FN((args) => {
+                    const fn = args.shift() as FunctionValue;
+                    ws.onclose = () => eval_function(fn, []);
+                    return MK_NULL();
+                }))
+                .set("onerror", MK_NATIVE_FN((args) => {
+                    const fn = args.shift() as FunctionValue;
+                    ws.onerror = (error) => eval_function(fn, [MK_STRING(error.message)]);
+                    return MK_NULL();
+                }))
+                .set("send", MK_NATIVE_FN((args) => {
+                    const data = args.shift() as StringVal;
+                    ws.send(data.value);
+                    return MK_NULL();
+                }))
+        )
     }), true);
 
     function localPath(path: string) {
@@ -250,6 +330,18 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
         }
     }), true);
 
+    env.declareVar("base64", MK_OBJECT(
+        new Map()
+            .set("encode", MK_NATIVE_FN((args) => {
+                const str = args.shift() as StringVal;
+                return MK_STRING(btoa(str.value));
+            }))
+            .set("decode", MK_NATIVE_FN((args) => {
+                const str = args.shift() as StringVal;
+                return MK_STRING(atob(str.value));
+            }))
+    ), true);
+
     env.declareVar("import", MK_NATIVE_FN((args) => {
         const path = localPath((args.shift() as StringVal).value);
 
@@ -301,7 +393,6 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
                 return MK_STRING(replaced);
             }))
     ), true);
-	
 
     function closeBussin(): null {
         if(beginTime != -1) {
@@ -313,7 +404,7 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
     env.declareVar("exit", MK_NATIVE_FN(() => closeBussin()), true);
 
     env.declareVar("finishExit", MK_NATIVE_FN(() => {
-        if(timeoutDepth == 0) {
+        if(waitDepth == 0) {
             closeBussin();
         } else {
             shouldExit = true;

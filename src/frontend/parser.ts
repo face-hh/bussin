@@ -183,7 +183,26 @@ export default class Parser {
     }
 
     private parse_expr(): Expr {
-        return this.parse_assignment_expr();
+        const data = this.parse_assignment_expr();
+
+        // before returning, if it's a ternary we don't want to return the direct value.
+        if(this.at().type == TokenType.Optional) {
+            if(data.kind != "BinaryExpr" && data.kind != "Identifier") {
+                throw new Error("Expected BinaryExpr or Identifier following ternary expression.");
+            }
+            this.eat();
+
+            const left = this.parse_expr();
+
+            this.expect(TokenType.Colon, "Colon (\":\") expected following left side of ternary operator (\"?\").");
+
+            const right = this.parse_expr();
+            
+            const ifStmt = { kind: "IfStatement", test: data, body: [left], alternate: [right] } as IfStatement;
+            return {kind:"CallExpr",args:[],caller:{kind:"FunctionDeclaration",parameters:[],name:"<anonymous>",body:[ifStmt]} as FunctionDeclaration} as CallExpr;
+        }
+
+        return data;
     }
 
     private parse_assignment_expr(): Expr {
@@ -209,7 +228,7 @@ export default class Parser {
             left = {
                 kind: "BinaryExpr",
                 left, right, operator
-            } as BinaryExpr
+            } as BinaryExpr;
         }
 
         return left;

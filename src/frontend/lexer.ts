@@ -40,6 +40,8 @@ export enum TokenType {
     And, // &&
     Ampersand, // &
     Bar, // |
+    Optional, // ?
+
     EOF, // Signified the end of file.
 }
 
@@ -77,6 +79,7 @@ const TOKEN_CHARS: Record<string, TokenType> = {
     ":": TokenType.Colon,
     ",": TokenType.Comma,
     "|": TokenType.Bar,
+    "?": TokenType.Optional,
 };
 
 /**
