@@ -314,6 +314,10 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
                 obj.set(key, value);
                 return MK_NULL();
             }))
+            .set("keys", MK_NATIVE_FN((args) => {
+                const obj = (args.shift() as ObjectVal).properties;
+                return MK_ARRAY(Array.from(obj.keys()).map(MK_STRING));
+            }))
     ), true);
 
     env.declareVar("len", MK_NATIVE_FN((args) => {
