@@ -81,7 +81,7 @@ export default class Parser {
 
         this.expect(TokenType.Semicolon, "Semicolon (\";\") expected following \"test expression\" in \"for\" statement.");
 
-        const update = this.parse_assignment_expr();
+        const update = this.parse_expr();
 
         this.expect(TokenType.CloseParen, "Closing parenthesis (\"(\") expected following \"additive expression\" in \"for\" statement.");
 
@@ -186,19 +186,19 @@ export default class Parser {
         const data = this.parse_assignment_expr();
 
         // before returning, if it's a ternary we don't want to return the direct value.
-        if(this.at().type == TokenType.Optional) {
+        if(this.at().type == TokenType.Ternary) {
             if(data.kind != "BinaryExpr" && data.kind != "Identifier") {
                 throw new Error("Expected BinaryExpr or Identifier following ternary expression.");
             }
             this.eat();
 
-            const left = this.parse_expr();
+            const expr = this.parse_expr();
 
-            this.expect(TokenType.Colon, "Colon (\":\") expected following left side of ternary operator (\"?\").");
-
-            const right = this.parse_expr();
+            if(expr.kind != "BinaryExpr" || (expr as BinaryExpr).operator != "|") {
+                throw new Error("Bar (\"|\") expected following left side of ternary operator (\"->\").");
+            }
             
-            const ifStmt = { kind: "IfStatement", test: data, body: [left], alternate: [right] } as IfStatement;
+            const ifStmt = { kind: "IfStatement", test: data, body: [(expr as BinaryExpr).left], alternate: [(expr as BinaryExpr).right] } as IfStatement;
             return {kind:"CallExpr",args:[],caller:{kind:"FunctionDeclaration",parameters:[],name:"<anonymous>",body:[ifStmt]} as FunctionDeclaration} as CallExpr;
         }
 
@@ -210,7 +210,7 @@ export default class Parser {
 
         if (this.at().type == TokenType.Equals) {
             this.eat(); // advance past the equals
-            const value = this.parse_assignment_expr();
+            const value = this.parse_expr();
 
             return { value, assigne: left, kind: "AssignmentExpr" } as AssignmentExpr;
         }
@@ -386,10 +386,10 @@ export default class Parser {
 
     // foo(x = 5, v = "Bar")
     private parse_args_list(): Expr[] {
-        const args = [this.parse_assignment_expr()];
+        const args = [this.parse_expr()];
 
         while (this.at().type == TokenType.Comma && this.eat()) {
-            args.push(this.parse_assignment_expr());
+            args.push(this.parse_expr());
         }
 
         return args;

@@ -40,7 +40,7 @@ export enum TokenType {
     And, // &&
     Ampersand, // &
     Bar, // |
-    Optional, // ?
+    Ternary, // ->
 
     EOF, // Signified the end of file.
 }
@@ -79,7 +79,6 @@ const TOKEN_CHARS: Record<string, TokenType> = {
     ":": TokenType.Colon,
     ",": TokenType.Comma,
     "|": TokenType.Bar,
-    "?": TokenType.Optional,
 };
 
 /**
@@ -221,6 +220,13 @@ export function tokenize(sourceCode: string): Token[] {
                     break;
                 }
                 case "-":
+                    if(src[1] == ">") {
+                        src.shift();
+                        src.shift();
+                        tokens.push(token("->", TokenType.Ternary));
+                        break;
+                    }
+                // eslint-disable-next-line no-fallthrough
                 case "+":
                     if(src[1] == src[0]) {
                         const prevtoken = tokens[tokens.length - 1];
