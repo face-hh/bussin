@@ -1,6 +1,5 @@
 
 import { execSync } from 'child_process';
-import request, { HttpVerb } from 'sync-request';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const rl = require('readline-sync')
 import * as fs from 'fs';
@@ -8,12 +7,13 @@ import { WebSocket } from 'ws';
 import UserAgent = require('user-agents');
 
 import { Identifier, MemberExpr } from '../frontend/ast';
-import { printValues } from './eval/native-fns';
+import { runtimeToJS, printValues, jsToRuntime } from './eval/native-fns';
 import { ArrayVal, FunctionValue, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, MK_ARRAY, NumberVal, ObjectVal, RuntimeVal, StringVal } from "./values";
 import { eval_function } from './eval/expressions';
 import Parser from '../frontend/parser';
 import { evaluate } from './interpreter';
 import { transcribe } from '../utils/transcriber';
+import axios from 'axios';
 
 export function createGlobalEnv(beginTime: number = -1, filePath: string = __dirname, args: RuntimeVal[] = [], currency: string = "-"): Environment {
     const env = new Environment();
@@ -143,7 +143,16 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
     env.declareVar("time", MK_NATIVE_FN(() => MK_NUMBER(Date.now())), true);
 
     let waitDepth = 0;
+    let slept = 0;
+    let net = 0;
     let shouldExit = false;
+
+    function lowerWaitDepth() {
+        waitDepth--;
+        if(waitDepth <= 0 && shouldExit) {
+            closeBussin();
+        }
+    }
 
     const timeoutIds: {[key: number]: NodeJS.Timeout} = {};
 
@@ -160,12 +169,11 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
         const func = args.shift() as FunctionValue;
         const time = args.shift() as NumberVal;
         waitDepth++;
+        const bt = Date.now();
         const tm = setTimeout(() => {
             eval_function(func, []); // No args can be present here, as none are able to be given.
-            waitDepth--;
-            if(waitDepth == 0 && shouldExit) {
-                process.exit();
-            }
+            lowerWaitDepth();
+            slept += Date.now() - bt;
         }, time.value);
         return MK_NUMBER(generateTimeoutId(tm));
     }), true);
@@ -174,7 +182,12 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
         const func = args.shift() as FunctionValue;
         const time = args.shift() as NumberVal;
         waitDepth++;
-        const iv = setInterval(() => eval_function(func, []), time.value); // No args can be present here, as none are able to be given.
+        let bt = Date.now();
+        const iv = setInterval(() => {
+            eval_function(func, []);
+            slept += Date.now() - bt;
+            bt = Date.now();
+        }, time.value); // No args can be present here, as none are able to be given.
         return MK_NUMBER(generateTimeoutId(iv));
     }), true);
 
@@ -182,7 +195,7 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
         const id = args.shift() as NumberVal;
         if(timeoutIds[id.value]) {
             clearTimeout(timeoutIds[id.value]);
-            waitDepth--;
+            lowerWaitDepth();
             return MK_BOOL();
         }
         return MK_BOOL(false);
@@ -191,26 +204,10 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
         const id = args.shift() as NumberVal;
         if(timeoutIds[id.value]) {
             clearInterval(timeoutIds[id.value]);
-            waitDepth--;
+            lowerWaitDepth();
             return MK_BOOL();
         }
         return MK_BOOL(false);
-    }), true);
-
-    env.declareVar("fetch", MK_NATIVE_FN((args) => {
-        const url = args.shift() as StringVal;
-        const options = args.shift() as ObjectVal;
-    
-        const method = options == undefined ? "GET" : (options.properties.get("method") as StringVal)?.value ?? "GET";
-        const body = options == undefined ? null : (options.properties.get("body") as StringVal)?.value ?? null;
-        const content_type = options == undefined ? "text/plain" : (options.properties.get("content_type") as StringVal)?.value ?? "text/plain";
-
-        const res = request(method as HttpVerb, url.value, { body: body, headers: { "content-type": content_type } });
-        if (res.statusCode !== 200) {
-            throw new Error("Failed to fetch data: " + res.body.toString('utf8'));
-        }
-    
-        return MK_STRING(res.body.toString('utf8'));
     }), true);
 
     env.declareVar("websocket", MK_NATIVE_FN((args) => {
@@ -219,12 +216,12 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
         const ua = (new UserAgent()).toString();
         const ws = new WebSocket(url.value, { headers: { "user-agent": ua } });
 
+        const now = Date.now();
+
         waitDepth++;
         ws.addEventListener("close", () => {
-            waitDepth--;
-            if(waitDepth == 0 && shouldExit) {
-                process.exit();
-            }
+            net += Date.now() - now;
+            lowerWaitDepth();
         });
 
         return MK_OBJECT(
@@ -255,6 +252,31 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
                     return MK_NULL();
                 }))
         )
+    }), true);
+
+    env.declareVar("fetch", MK_NATIVE_FN((args) => {
+        const url = (args.shift() as StringVal).value;
+        const options = args.shift() as ObjectVal;
+    
+        const method = options == undefined ? "GET" : (options.properties.get("method") as StringVal)?.value ?? "GET";
+        const body = options == undefined ? null : (options.properties.get("body") as StringVal)?.value ?? null;
+        const content_type = options == undefined ? "text/plain" : (options.properties.get("content_type") as StringVal)?.value ?? "text/plain";
+        
+        return MK_NATIVE_FN((args) => {
+            const fn = args.shift() as FunctionValue;
+            waitDepth++;
+            const now = Date.now();
+            (async () => {
+                const req = await axios.request({url, method, headers: { "content-type": content_type }, data: body });
+                if (req.status !== 200) {
+                    throw new Error("Failed to fetch data: " + req.data.toString('utf8'));
+                }
+                eval_function(fn, [MK_STRING(req.data.toString("utf-8"))]);
+                net += Date.now() - now;
+                lowerWaitDepth();
+            })();
+            return MK_NULL();
+        });
     }), true);
 
     function localPath(path: string) {
@@ -363,6 +385,33 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
         return evaluate(program, env); // this will evaluate and return the last value emitted. neat
     }), true);
 
+    // Bussin Object Notation!!!
+    env.declareVar("bson", MK_OBJECT(
+        new Map()
+            .set("stringify", MK_NATIVE_FN((args) => {
+                if(args[0].type == "object") {
+                    const obj = args.shift() as ObjectVal;
+                    return MK_STRING(JSON.stringify(runtimeToJS(obj)));
+                } else if (args[0].type == "array") {
+                    const arr = args.shift() as ArrayVal;
+                    return MK_STRING(JSON.stringify(runtimeToJS(arr)));
+                }
+                throw "Not json stringifiable type: " + args[0].type;
+            }))
+            .set("parse", MK_NATIVE_FN((args) => {
+                const string = (args.shift() as StringVal).value;
+                const jsonObj: {[key: string]: unknown} = JSON.parse(string);
+                if(Array.isArray(jsonObj)) {
+                    const rtArr: RuntimeVal[] = [];
+                    jsonObj.forEach(val => rtArr.push(jsToRuntime(val)))
+                    return MK_ARRAY(rtArr);
+                }
+                const rtObj = new Map();
+                Object.keys(jsonObj).forEach((key) => rtObj.set(key, jsToRuntime(jsonObj[key])));
+                return MK_OBJECT(rtObj);
+            }))
+    ), true);
+
     function parseRegex(regex: string): RegExp {
         const split = regex.split("/");
         if(split.length < 3) throw "Invalid regex: " + regex;
@@ -400,7 +449,7 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
 
     function closeBussin(): null {
         if(beginTime != -1) {
-            console.log(`\nBussin executed in ${(Date.now() - beginTime).toLocaleString()}ms.`);
+            console.log(`\nBussin executed in ${(Date.now() - beginTime).toLocaleString()}ms${slept > 0 ? ` (${slept.toLocaleString()}ms slept)` : ""}${net > 0 ? ` (${net.toLocaleString()}ms networking)` : ""}.`);
         }
         process.exit();
     }

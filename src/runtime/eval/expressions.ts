@@ -142,19 +142,18 @@ export function eval_call_expr(expr: CallExpr, env: Environment): RuntimeVal {
     const args = expr.args.map(arg => evaluate(arg, env));
     const fn = evaluate(expr.caller, env);
 
+    if(fn == null || fn.type == "null") {
+        throw "Cannot call null.";
+    }
 
     if (fn.type == "native-fn") {
-        const result = (fn as NativeFnValue).call(args, env);
-
-        return result;
+        return (fn as NativeFnValue).call(args, env);
     }
 
     if (fn.type == "fn") {
         const func = fn as FunctionValue;
         return eval_function(func, args);
     }
-
-    if(fn.type == "null") return;
 
     throw "Cannot call value that is not a function: " + JSON.stringify(fn);
 }
