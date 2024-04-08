@@ -359,8 +359,6 @@ yap("watcho name > ")(bruh(x) {
 })
 ```
 
-**Note**: The user won't see the text they type, but you will successfully receive the text after the user presses Enter.
-
 # Credits
 - Huge thanks to [Tyler Laceby](https://github.com/tlaceby) for creating the [Guide to Interpreters](https://github.com/tlaceby/guide-to-interpreters-series)!
 - Thanks to [Linker](https://github.com/Linker-123?tab=repositories) for showing me his compiler
