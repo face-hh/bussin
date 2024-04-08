@@ -8,6 +8,7 @@ import { evaluate } from "./runtime/interpreter";
 import { readFileSync } from "fs";
 import { get_currency, transcribe } from "./utils/transcriber";
 import { MK_STRING } from "./runtime/values";
+import { runtimeToJS } from "./runtime/eval/native-fns";
 
 const args = process.argv;
 args.shift();
@@ -59,7 +60,7 @@ async function repl() {
         const program = parser.produceAST(input);
 
         try {
-            const result = evaluate(program, env);
+            const result = runtimeToJS(evaluate(program, env));
             console.log(result);
         } catch(err) {
             console.log(err);
