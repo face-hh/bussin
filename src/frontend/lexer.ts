@@ -90,15 +90,23 @@ const ESCAPED: Record<string, string> = {
     r: "\r",
 };
 
+const reverseTokenType: Record<number, string> = Object.keys(TokenType)
+    .filter(key => typeof TokenType[key as keyof typeof TokenType] === "number")
+    .reduce((obj, key) => {
+        obj[TokenType[key as keyof typeof TokenType]] = key;
+        return obj;
+    }, {} as Record<number, string>);
+
 // Represents a single token from the source-code.
 export interface Token {
     value: string; // contains the raw value as seen inside the source code.
     type: TokenType; // tagged structure.
+    toString: () => unknown;
 }
 
 // Returns a token of a given type and value
 function token(value = "", type: TokenType): Token {
-    return { value, type };
+    return { value, type, toString: () => {return {value, type: reverseTokenType[type]}} };
 }
 
 /**

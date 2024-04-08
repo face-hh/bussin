@@ -466,7 +466,7 @@ export default class Parser {
                 return value;
             }
             default:
-                console.error("Unexpected token found during parsing!", this.at());
+                console.error("Unexpected token found during parsing!", this.at().toString());
                 process.exit(1);
         }
     }
