@@ -352,11 +352,13 @@ fuck_around {
 }
 ```
 
-### New in 1.1.0: yapping
+### User Input
 ```rs
-lit x be yap("watcho name > ") rn
-waffle(x)
+yap("watcho name > ")(bruh(x) {
+    waffle(x)
+})
 ```
+
 **Note**: The user won't see the text they type, but you will successfully receive the text after the user presses Enter.
 
 # Credits
