@@ -1,10 +1,10 @@
 
 import { execSync } from 'child_process';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const rl = require('readline-sync')
 import * as fs from 'fs';
 import { WebSocket } from 'ws';
 import UserAgent = require('user-agents');
+import * as readline from 'readline/promises';
 
 import { Identifier, MemberExpr } from '../frontend/ast';
 import { runtimeToJS, printValues, jsToRuntime } from './eval/native-fns';
@@ -65,15 +65,25 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
         return MK_ARRAY(str.split(splitat).map(val => MK_STRING(val)));
     }), true);
 
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
     env.declareVar("input", MK_NATIVE_FN((args) => {
         const cmd = (args.shift() as StringVal).value;
 
-        const result = rl.question(cmd);
-        if (result !== null) {
-            return MK_STRING(result);
-        } else {
+        return MK_NATIVE_FN((args) => {
+            waitDepth++;
+            const fn = args.shift() as FunctionValue;
+            const now = Date.now();
+            (async () => {
+                const result = await rl.question(cmd);
+                eval_function(fn, [MK_STRING(result)]);
+                slept += Date.now() - now;
+                lowerWaitDepth();
+            })();
             return MK_NULL();
-        }
+        });
     }), true);
 
     env.declareVar("math", MK_OBJECT(

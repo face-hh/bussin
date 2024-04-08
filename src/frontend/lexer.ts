@@ -43,6 +43,7 @@ export enum TokenType {
     Ternary, // ->
 
     EOF, // Signified the end of file.
+    NewLine, // New line
 }
 
 /**
@@ -79,6 +80,7 @@ const TOKEN_CHARS: Record<string, TokenType> = {
     ":": TokenType.Colon,
     ",": TokenType.Comma,
     "|": TokenType.Bar,
+    "\n": TokenType.NewLine,
 };
 
 /**
@@ -99,14 +101,15 @@ const reverseTokenType: Record<number, string> = Object.keys(TokenType)
 
 // Represents a single token from the source-code.
 export interface Token {
-    value: string; // contains the raw value as seen inside the source code.
+    value: string; // contains the value as seen inside the source code.
     type: TokenType; // tagged structure.
-    toString: () => unknown;
+    raw: string; // actual raw value. used for column in strings
+    toString: () => object;
 }
 
 // Returns a token of a given type and value
-function token(value = "", type: TokenType): Token {
-    return { value, type, toString: () => {return {value, type: reverseTokenType[type]}} };
+function token(value: string = "", type: TokenType, raw: string = value): Token {
+    return { value, type, raw, toString: () => {return {value, type: reverseTokenType[type]}} };
 }
 
 /**
@@ -198,11 +201,13 @@ export function tokenize(sourceCode: string): Token[] {
                     break;
                 case '"': {
                     let str = "";
+                    let raw = "";
                     src.shift();
         
                     let escaped = false;
                     while (src.length > 0) {
                         const key = src.shift();
+                        raw += key;
                         if(key == "\\") {
                             escaped = !escaped;
                             if(escaped)continue;
@@ -224,7 +229,7 @@ export function tokenize(sourceCode: string): Token[] {
                     }
         
                     // append new string token.
-                    tokens.push(token(str, TokenType.String));
+                    tokens.push(token(str, TokenType.String, raw.substring(0, raw.length - 1)));
                     break;
                 }
                 case "-":
@@ -322,7 +327,7 @@ export function tokenize(sourceCode: string): Token[] {
         }
     }
 
-    tokens.push({ type: TokenType.EOF, value: 'EndOfFile' })
+    tokens.push(token("EndOfFile", TokenType.EOF));
 
     return tokens;
 }

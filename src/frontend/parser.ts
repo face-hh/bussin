@@ -4,24 +4,72 @@ import { tokenize, Token, TokenType } from "./lexer";
 export default class Parser {
     private tokens: Token[] = [];
 
+    // fuck you it works
+    private lineCounter: number = 1;
+    private column: number = 0;
+    private nonNLLine: number = 0;
+    private nonNLColumn: number = 0;
+    private lastNonNLLine: number = 0;
+    private lastNonNLColumn: number = 0;
+
+    private shift(): Token {
+        const token = this.tokens.shift();
+        switch(token.type) {
+            case TokenType.NewLine:
+                this.lineCounter++;
+                break;
+            case TokenType.String: {
+                const split = token.raw.split("\n");
+                this.lineCounter += split.length - 1;
+                if(split.length > 1) {
+                    this.column = split[split.length - 1].length + 1; // +1 for quote
+                }
+            }
+            // eslint-disable-next-line no-fallthrough
+            default:
+                this.lastNonNLLine = this.nonNLLine;
+                this.nonNLLine = this.lineCounter;
+                if(token.type != TokenType.String && (token.type != TokenType.Identifier || token.value != "finishExit")) {
+                    this.lastNonNLLine = this.nonNLLine;
+                    this.nonNLLine = this.lineCounter;
+                    this.column += token.value.length;
+                    this.lastNonNLColumn = this.nonNLColumn;
+                    this.nonNLColumn = this.column;
+                }
+                this.lastNonNLColumn = this.nonNLColumn;
+                this.nonNLColumn = this.column;
+                break;
+        }
+        return token;
+    }
+
+    private at(): Token {
+        let token = this.tokens[0] as Token;
+        while(token.type == TokenType.NewLine) {
+            this.shift();
+            token = this.tokens[0] as Token;
+        }
+        return token;
+    }
+
     private not_eof(): boolean {
-        return this.tokens[0].type != TokenType.EOF;
+        return this.at().type != TokenType.EOF;
     }
 
-    private at() {
-        return this.tokens[0] as Token;
-    }
-
-    private eat() {
-        const prev = this.tokens.shift() as Token;
+    private eat(): Token {
+        let prev;
+        do {
+            prev = this.shift();
+        } while (prev.type == TokenType.NewLine);
 
         return prev;
     }
 
-    private expect(type: TokenType, err: string) {
-        const prev = this.tokens.shift() as Token;
+    private expect(type: TokenType, err: string): Token {
+        const prev = this.eat();
+
         if (!prev || prev.type != type) {
-            console.error(`Parser error:\n`, err, prev, "Expecting: ", type);
+            console.error(`Parser error: (Ln ${this.lastNonNLLine}, Col ${this.lastNonNLColumn + 1})\n`, err, "Expecting:", type);
             process.exit(1)
         }
 
@@ -37,7 +85,7 @@ export default class Parser {
 
         // Parse until end of file
         while (this.not_eof()) {
-            program.body.push(this.parse_stmt())
+            program.body.push(this.parse_stmt());
         }
         return program;
     }
@@ -53,6 +101,9 @@ export default class Parser {
                 return this.parse_if_statement();
             case TokenType.For:
                 return this.parse_for_statement();
+            case TokenType.NewLine:
+                this.at(); // will remove all new lines
+                return this.parse_stmt();
             default:
                 return this.parse_expr();
         }
@@ -453,7 +504,7 @@ export default class Parser {
             case TokenType.String:
                 return {
                     kind: "StringLiteral",
-                    value: this.eat().value
+                    value: this.eat().value,
                 } as StringLiteral;
             case TokenType.Fn:
                 return this.parse_function_declaration();
