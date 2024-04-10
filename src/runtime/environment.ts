@@ -88,8 +88,8 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
 
     env.declareVar("math", MK_OBJECT(
         new Map()
-            .set("pi", Math.PI)
-            .set("e", Math.E)
+            .set("pi", MK_NUMBER(Math.PI))
+            .set("e", MK_NUMBER(Math.E))
             .set("sqrt", MK_NATIVE_FN((args) => {
                 const arg = (args[0] as NumberVal).value;
                 return MK_NUMBER(Math.sqrt(arg));

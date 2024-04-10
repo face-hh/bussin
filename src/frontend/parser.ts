@@ -150,16 +150,7 @@ export default class Parser {
         this.eat(); // eat if keyword
         this.expect(TokenType.OpenParen, "Opening parenthesis (\"(\") expected following \"if\" statement.");
 
-        let test = this.parse_expr();
- 
-        if(this.at().type == TokenType.And || this.at().type == TokenType.Bar) {
-            test = {
-                kind: "BinaryExpr",
-                left: test,
-                operator: this.eat().value,
-                right: this.parse_expr(),
-            } as BinaryExpr;
-        }
+        const test = this.parse_expr();
 
         this.expect(TokenType.CloseParen, "Closing parenthesis (\"(\") expected following \"if\" statement.");
 
@@ -280,6 +271,14 @@ export default class Parser {
                 kind: "BinaryExpr",
                 left, right, operator
             } as BinaryExpr;
+            while(this.at().type == TokenType.And || this.at().type == TokenType.Bar) {
+                left = {
+                    kind: "BinaryExpr",
+                    left,
+                    operator: this.eat().value,
+                    right: this.parse_expr(),
+                } as BinaryExpr;
+            }
         }
 
         return left;
@@ -378,7 +377,7 @@ export default class Parser {
             left = {
                 kind: "BinaryExpr",
                 left, right, operator
-            } as BinaryExpr
+            } as BinaryExpr;
         }
 
         return left;
@@ -393,7 +392,7 @@ export default class Parser {
             left = {
                 kind: "BinaryExpr",
                 left, right, operator
-            } as BinaryExpr
+            } as BinaryExpr;
         }
 
         return left;
@@ -512,7 +511,7 @@ export default class Parser {
                 this.eat(); // eat the opening paren
                 const value = this.parse_expr();
 
-                this.expect(TokenType.CloseParen, "Unexpected token (?) found while parsing arguments."); // closing paren
+                this.expect(TokenType.CloseParen, `Unexpected token (${JSON.stringify(this.at().toString())}) found while parsing arguments.`); // closing paren
 
                 return value;
             }
