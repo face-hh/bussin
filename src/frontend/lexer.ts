@@ -238,19 +238,23 @@ export function tokenize(sourceCode: string): Token[] {
                         src.shift();
                         tokens.push(token("->", TokenType.Ternary));
                         break;
+                    } else if (src[1] != src[0] && tokens[tokens.length - 1].type != TokenType.Identifier) {
+                        tokens.push(token("0", TokenType.Number));
+                        tokens.push(token(src.shift(), TokenType.BinaryOperator));
+                        break;
                     }
                 // eslint-disable-next-line no-fallthrough
                 case "+":
                     if(src[1] == src[0]) {
                         const prevtoken = tokens[tokens.length - 1];
-                        if(prevtoken == null) break;
-
-                        tokens.push(token("=", TokenType.Equals));
-                        tokens.push(token(prevtoken.value, prevtoken.type));
-                        tokens.push(token(src.shift(), TokenType.BinaryOperator));
-                        tokens.push(token("1", TokenType.Number));
-                        src.shift();
-                        break;
+                        if(prevtoken != null && prevtoken.type == TokenType.Identifier) {
+                            tokens.push(token("=", TokenType.Equals));
+                            tokens.push(token(prevtoken.value, prevtoken.type));
+                            tokens.push(token(src.shift(), TokenType.BinaryOperator));
+                            tokens.push(token("1", TokenType.Number));
+                            src.shift();
+                            break;
+                        }
                     }
                 // eslint-disable-next-line no-fallthrough
                 case "*":
