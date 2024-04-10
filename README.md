@@ -325,7 +325,7 @@ Bussin supports ternary operators like this:
 ```rs
 lit x be 10 rn
 lit y be 5 rn
-lit z be x thicc y then "thicc" ornot "smol" rn // "Greater"
+lit z be x thicc y then "thicc" ornot "smol" rn // "thicc"
 ```
 
 ### Exit
