@@ -285,7 +285,7 @@ export default class Parser {
     }
 
     private parse_try_catch_expr(): Expr {
-        if (this.at().value !== 'try') {
+        if (this.at().type != TokenType.Identifier || this.at().value !== 'try') {
             return this.parse_and_statement()
         }
 
@@ -293,7 +293,7 @@ export default class Parser {
 
         const body = this.parse_block_statement();
 
-        if (this.at().value !== 'catch') throw "\"try\" statement must be followed by a \"catch\" statement."
+        if (this.at().type != TokenType.Identifier || this.at().value !== 'catch') throw "\"try\" statement must be followed by a \"catch\" statement."
 
         this.eat();
 
