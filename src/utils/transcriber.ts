@@ -98,6 +98,8 @@ export function transcribe(code: string, currency: string) {
         .replace_fr("beminus", "-=")
         .replace_fr("betimes", "*=")
         .replace_fr("bedivided", "/=")
+        .replace_fr("then", "->")
+        .replace_fr("ornot", "|")
         .replace(/: number/g, '')
         .replace(/: string/g, '')
         .replace(/: object/g, '')
