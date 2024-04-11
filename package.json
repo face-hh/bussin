@@ -17,6 +17,8 @@
     "geoip-lite": "^1.4.8",
     "ip2location-nodejs": "^9.6.0",
     "js-user-country": "^1.0.1",
+    "os": "^0.1.2",
+    "path": "^0.12.7",
     "readline-sync": "^1.4.10",
     "user-agents": "^1.1.162",
     "ws": "^8.16.0"

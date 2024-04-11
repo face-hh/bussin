@@ -2,6 +2,8 @@
 import { execSync } from 'child_process';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import { WebSocket } from 'ws';
 import UserAgent = require('user-agents');
 import * as readline from 'readline/promises';
@@ -298,6 +300,10 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
 
     env.declareVar("fs", MK_OBJECT(
         new Map()
+            .set("tmpdir", MK_STRING(os.tmpdir()))
+            .set("appdata", MK_STRING(process.env.APPDATA || (process.platform === 'darwin' ? path.join(os.homedir(), 'Library', 'Application Support') : path.join(os.homedir(), '.local', 'share'))))
+            .set("home", MK_STRING(os.homedir()))
+            .set("desktop", MK_STRING(path.join(os.homedir(), "Desktop")))
             .set("read", MK_NATIVE_FN((args) => {
                 const path = localPath((args.shift() as StringVal).value);
                 const encoding = (args.shift() as StringVal)?.value ?? "utf8";
@@ -310,9 +316,10 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
                 fs.writeFileSync(path, data);
                 return MK_NULL();
             }))
-            .set("exists", MK_NATIVE_FN((args) => {
+            .set("mkdir", MK_NATIVE_FN((args) => {
                 const path = localPath((args.shift() as StringVal).value);
-                return MK_BOOL(fs.existsSync(path));
+                fs.mkdirSync(path);
+                return MK_NULL();
             }))
             .set("rm", MK_NATIVE_FN((args) => {
                 const path = localPath((args.shift() as StringVal).value);
@@ -321,8 +328,12 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
             }))
             .set("rmdir", MK_NATIVE_FN((args) => {
                 const path = localPath((args.shift() as StringVal).value);
-                fs.rmdirSync(path);
+                fs.rmdirSync(path, { recursive: true });
                 return MK_NULL();
+            }))
+            .set("exists", MK_NATIVE_FN((args) => {
+                const path = localPath((args.shift() as StringVal).value);
+                return MK_BOOL(fs.existsSync(path));
             }))
     ), true);
 
