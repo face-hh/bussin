@@ -108,7 +108,7 @@ Arrays contain information without needing keys. Bussin X has them as well:
 ```rs
 lit arr be [ 1, 2, 3, 4 ] rn
 
-arr[1] = 5
+arr[0] = 5
 
 waffle(arr) // [5, 2, 3, 4]
 ```
