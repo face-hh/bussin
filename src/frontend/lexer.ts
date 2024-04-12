@@ -138,6 +138,23 @@ function isint(str: string) {
     return c >= bounds[0] && c <= bounds[1];
 }
 
+function getPrevIdents(tokens: Array<Token>): Token[] {
+    const reversed = [...tokens].reverse();
+    const newTokens: Token[] = [];
+    for(const token of reversed) {
+        if(token.type == TokenType.Identifier ||
+            token.type == TokenType.Dot ||
+            token.type == TokenType.OpenBracket ||
+            token.type == TokenType.CloseBracket ||
+            (tokens[tokens.length - newTokens.length - 2] && tokens[tokens.length - newTokens.length - 2].type == TokenType.OpenBracket && token.type == TokenType.Number)) {
+                newTokens.push(token);
+            } else {
+                break;
+            }
+    }
+    return newTokens.length > 0 ? newTokens.reverse() : null;
+}
+
 /**
  * Given a string representing source code: Produce tokens and handles
  * possible unidentified characters.
@@ -246,10 +263,10 @@ export function tokenize(sourceCode: string): Token[] {
                 // eslint-disable-next-line no-fallthrough
                 case "+":
                     if(src[1] == src[0]) {
-                        const prevtoken = tokens[tokens.length - 1];
-                        if(prevtoken != null && prevtoken.type == TokenType.Identifier) {
+                        const prevtokens = getPrevIdents(tokens);
+                        if(prevtokens != null) {
                             tokens.push(token("=", TokenType.Equals));
-                            tokens.push(token(prevtoken.value, prevtoken.type));
+                            prevtokens.forEach(token => tokens.push(token));
                             tokens.push(token(src.shift(), TokenType.BinaryOperator));
                             tokens.push(token("1", TokenType.Number));
                             src.shift();
@@ -260,11 +277,11 @@ export function tokenize(sourceCode: string): Token[] {
                 case "*":
                 case "/":
                     if (src[1] == "=") {
-                        const prevtoken = tokens[tokens.length - 1];
-                        if(prevtoken == null) break;
+                        const prevtokens = getPrevIdents(tokens);
+                        if(prevtokens == null) break;
 
                         tokens.push(token("=", TokenType.Equals));
-                        tokens.push(token(prevtoken.value, prevtoken.type));
+                        prevtokens.forEach(token => tokens.push(token));
                         tokens.push(token(src.shift(), TokenType.BinaryOperator));
                         src.shift();
                         break;
