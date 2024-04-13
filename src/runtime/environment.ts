@@ -528,12 +528,15 @@ export default class Environment {
     }
 
     public lookupOrMutObject(expr: MemberExpr, value?: RuntimeVal, property?: Identifier): RuntimeVal {
-        if (expr.object.kind === 'MemberExpr') return this.lookupOrMutObject(expr.object as MemberExpr, value, expr.property as Identifier);
+        let pastVal;
+        if (expr.object.kind === 'MemberExpr') {
+            pastVal = this.lookupOrMutObject(expr.object as MemberExpr, value, expr.property as Identifier);
+        } else {
+            const varname = (expr.object as Identifier).symbol;
+            const env = this.resolve(varname);
 
-        const varname = (expr.object as Identifier).symbol;
-        const env = this.resolve(varname);
-
-        let pastVal = env.variables.get(varname);
+            pastVal = env.variables.get(varname);
+        }
 
         switch(pastVal.type) {
             case "object": {
