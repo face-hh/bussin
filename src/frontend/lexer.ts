@@ -255,10 +255,13 @@ export function tokenize(sourceCode: string): Token[] {
                         src.shift();
                         tokens.push(token("->", TokenType.Ternary));
                         break;
-                    } else if (src[1] != src[0] && tokens[tokens.length - 1].type != TokenType.Identifier) {
-                        tokens.push(token("0", TokenType.Number));
-                        tokens.push(token(src.shift(), TokenType.BinaryOperator));
-                        break;
+                    } else if (src[1] != src[0]) {
+                        const previdents = getPrevIdents(tokens);
+                        if(previdents == null && tokens[tokens.length - 1].type != TokenType.CloseParen) {
+                            tokens.push(token("0", TokenType.Number));
+                            tokens.push(token(src.shift(), TokenType.BinaryOperator));
+                            break;
+                        }
                     }
                 // eslint-disable-next-line no-fallthrough
                 case "+":
