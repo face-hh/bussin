@@ -530,7 +530,10 @@ export default class Environment {
     public lookupOrMutObject(expr: MemberExpr, value?: RuntimeVal, property?: Identifier): RuntimeVal {
         let pastVal;
         if (expr.object.kind === 'MemberExpr') {
-            pastVal = this.lookupOrMutObject(expr.object as MemberExpr, value, expr.property as Identifier);
+            // We will get the expr.object property of the expr.object -- since we are using this just to get the value, we will null the value as it will not be changed
+            // This will then, in cases like a.b.c, will return a.b -- now this a.b will be put into pastVal recursively and then it will get c of a.b
+            // (Funny how I spent like 20 minutes debugging this just to realize that it was passing value in and then causing it to return the value which isn't an array/object)
+            pastVal = this.lookupOrMutObject(expr.object as MemberExpr, null, (expr.object as MemberExpr).property as Identifier);
         } else {
             const varname = (expr.object as Identifier).symbol;
             const env = this.resolve(varname);
@@ -540,7 +543,6 @@ export default class Environment {
 
         switch(pastVal.type) {
             case "object": {
-
                 const currentProp = (expr.property as Identifier).symbol;
                 const prop = property ? property.symbol : currentProp;
 
@@ -552,11 +554,12 @@ export default class Environment {
             }
             case "array": {
 
-                let num: RuntimeVal | number = evaluate(expr.property, this);
+                // Will evaluate the expression. Numbers will stay, but a variable will work. This allows for array[0] and array[ident].
+                const numRT: RuntimeVal = evaluate(expr.property, this);
 
-                if(num.type != "number") throw "Arrays do not have keys: " + expr.property;
+                if(numRT.type != "number") throw "Arrays do not have keys: " + expr.property;
 
-                num = (num as NumberVal).value;
+                const num = (numRT as NumberVal).value;
 
                 if(value) (pastVal as ArrayVal).values[num] = value;
 

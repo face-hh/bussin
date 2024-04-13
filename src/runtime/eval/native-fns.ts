@@ -4,7 +4,7 @@ export function printValues(args: Array<RuntimeVal>) {
     for (let i = 0; i < args.length; i++) {
         const arg = args[i];
 
-        console.log(runtimeToJS(arg));
+        console.dir(runtimeToJS(arg), { depth: null });
     }
 }
 
