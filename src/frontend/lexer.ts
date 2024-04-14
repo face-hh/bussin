@@ -40,7 +40,10 @@ export enum TokenType {
     And, // &&
     Ampersand, // &
     Bar, // |
+    Ternary, // ->
+
     EOF, // Signified the end of file.
+    NewLine, // New line
 }
 
 /**
@@ -77,6 +80,7 @@ const TOKEN_CHARS: Record<string, TokenType> = {
     ":": TokenType.Colon,
     ",": TokenType.Comma,
     "|": TokenType.Bar,
+    "\n": TokenType.NewLine,
 };
 
 /**
@@ -88,15 +92,24 @@ const ESCAPED: Record<string, string> = {
     r: "\r",
 };
 
+const reverseTokenType: Record<number, string> = Object.keys(TokenType)
+    .filter(key => typeof TokenType[key as keyof typeof TokenType] === "number")
+    .reduce((obj, key) => {
+        obj[TokenType[key as keyof typeof TokenType]] = key;
+        return obj;
+    }, {} as Record<number, string>);
+
 // Represents a single token from the source-code.
 export interface Token {
-    value: string; // contains the raw value as seen inside the source code.
+    value: string; // contains the value as seen inside the source code.
     type: TokenType; // tagged structure.
+    raw: string; // actual raw value. used for column in strings
+    toString: () => object;
 }
 
 // Returns a token of a given type and value
-function token(value = "", type: TokenType): Token {
-    return { value, type };
+function token(value: string = "", type: TokenType, raw: string = value): Token {
+    return { value, type, raw, toString: () => {return {value, type: reverseTokenType[type]}} };
 }
 
 /**
@@ -123,6 +136,23 @@ function isint(str: string) {
     const c = str.charCodeAt(0);
     const bounds = ["0".charCodeAt(0), "9".charCodeAt(0)];
     return c >= bounds[0] && c <= bounds[1];
+}
+
+function getPrevIdents(tokens: Array<Token>): Token[] {
+    const reversed = [...tokens].reverse();
+    const newTokens: Token[] = [];
+    for(const token of reversed) {
+        if(token.type == TokenType.Identifier ||
+            token.type == TokenType.Dot ||
+            token.type == TokenType.OpenBracket ||
+            token.type == TokenType.CloseBracket ||
+            (tokens[tokens.length - newTokens.length - 2] && tokens[tokens.length - newTokens.length - 2].type == TokenType.OpenBracket && token.type == TokenType.Number)) {
+                newTokens.push(token);
+            } else {
+                break;
+            }
+    }
+    return newTokens.length > 0 ? newTokens.reverse() : null;
 }
 
 /**
@@ -188,11 +218,13 @@ export function tokenize(sourceCode: string): Token[] {
                     break;
                 case '"': {
                     let str = "";
+                    let raw = "";
                     src.shift();
         
                     let escaped = false;
                     while (src.length > 0) {
                         const key = src.shift();
+                        raw += key;
                         if(key == "\\") {
                             escaped = !escaped;
                             if(escaped)continue;
@@ -214,31 +246,45 @@ export function tokenize(sourceCode: string): Token[] {
                     }
         
                     // append new string token.
-                    tokens.push(token(str, TokenType.String));
+                    tokens.push(token(str, TokenType.String, raw.substring(0, raw.length - 1)));
                     break;
                 }
                 case "-":
+                    if(src[1] == ">") {
+                        src.shift();
+                        src.shift();
+                        tokens.push(token("->", TokenType.Ternary));
+                        break;
+                    } else if (src[1] != src[0]) {
+                        const previdents = getPrevIdents(tokens);
+                        if(previdents == null && tokens[tokens.length - 1].type != TokenType.CloseParen) {
+                            tokens.push(token("0", TokenType.Number));
+                            tokens.push(token(src.shift(), TokenType.BinaryOperator));
+                            break;
+                        }
+                    }
+                // eslint-disable-next-line no-fallthrough
                 case "+":
                     if(src[1] == src[0]) {
-                        const prevtoken = tokens[tokens.length - 1];
-                        if(prevtoken == null) break;
-
-                        tokens.push(token("=", TokenType.Equals));
-                        tokens.push(token(prevtoken.value, prevtoken.type));
-                        tokens.push(token(src.shift(), TokenType.BinaryOperator));
-                        tokens.push(token("1", TokenType.Number));
-                        src.shift();
-                        break;
+                        const prevtokens = getPrevIdents(tokens);
+                        if(prevtokens != null) {
+                            tokens.push(token("=", TokenType.Equals));
+                            prevtokens.forEach(token => tokens.push(token));
+                            tokens.push(token(src.shift(), TokenType.BinaryOperator));
+                            tokens.push(token("1", TokenType.Number));
+                            src.shift();
+                            break;
+                        }
                     }
                 // eslint-disable-next-line no-fallthrough
                 case "*":
                 case "/":
                     if (src[1] == "=") {
-                        const prevtoken = tokens[tokens.length - 1];
-                        if(prevtoken == null) break;
+                        const prevtokens = getPrevIdents(tokens);
+                        if(prevtokens == null) break;
 
                         tokens.push(token("=", TokenType.Equals));
-                        tokens.push(token(prevtoken.value, prevtoken.type));
+                        prevtokens.forEach(token => tokens.push(token));
                         tokens.push(token(src.shift(), TokenType.BinaryOperator));
                         src.shift();
                         break;
@@ -305,7 +351,7 @@ export function tokenize(sourceCode: string): Token[] {
         }
     }
 
-    tokens.push({ type: TokenType.EOF, value: 'EndOfFile' })
+    tokens.push(token("EndOfFile", TokenType.EOF));
 
     return tokens;
 }

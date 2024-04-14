@@ -142,29 +142,23 @@ export function eval_call_expr(expr: CallExpr, env: Environment): RuntimeVal {
     const args = expr.args.map(arg => evaluate(arg, env));
     const fn = evaluate(expr.caller, env);
 
-    if (fn.type == "native-fn") {
-        const result = (fn as NativeFnValue).call(args, env);
+    if(fn != null) {
+        if (fn.type == "native-fn") {
+            return (fn as NativeFnValue).call(args, env);
+        }
 
-        return result;
-    }
-
-    if (fn.type == "fn") {
-        const func = fn as FunctionValue;
-        return eval_function(func, args);
+        if (fn.type == "fn") {
+            const func = fn as FunctionValue;
+            return eval_function(func, args);
+        }
     }
 
     throw "Cannot call value that is not a function: " + JSON.stringify(fn);
 }
 
 export function eval_member_expr(env: Environment, node?: AssignmentExpr, expr?: MemberExpr): RuntimeVal {
-    if (expr) {
-        const variable = env.lookupOrMutObject(expr);
-
-        return variable;
-    } else if (node) {
-        const variable = env.lookupOrMutObject(node.assigne as MemberExpr, evaluate(node.value, env));
-
-        return variable;
-    }
+    if (expr) return env.lookupOrMutObject(expr);
+    if (node) return env.lookupOrMutObject(node.assigne as MemberExpr, evaluate(node.value, env));
+    
     throw `Evaluating a member expression is not possible without a member or assignment expression.`
 }

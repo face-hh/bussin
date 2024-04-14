@@ -4,24 +4,72 @@ import { tokenize, Token, TokenType } from "./lexer";
 export default class Parser {
     private tokens: Token[] = [];
 
+    // fuck you it works
+    private lineCounter: number = 1;
+    private column: number = 0;
+    private nonNLLine: number = 0;
+    private nonNLColumn: number = 0;
+    private lastNonNLLine: number = 0;
+    private lastNonNLColumn: number = 0;
+
+    private shift(): Token {
+        const token = this.tokens.shift();
+        switch(token.type) {
+            case TokenType.NewLine:
+                this.lineCounter++;
+                break;
+            case TokenType.String: {
+                const split = token.raw.split("\n");
+                this.lineCounter += split.length - 1;
+                if(split.length > 1) {
+                    this.column = split[split.length - 1].length + 1; // +1 for quote
+                }
+            }
+            // eslint-disable-next-line no-fallthrough
+            default:
+                this.lastNonNLLine = this.nonNLLine;
+                this.nonNLLine = this.lineCounter;
+                if(token.type != TokenType.String && (token.type != TokenType.Identifier || token.value != "finishExit")) {
+                    this.lastNonNLLine = this.nonNLLine;
+                    this.nonNLLine = this.lineCounter;
+                    this.column += token.value.length;
+                    this.lastNonNLColumn = this.nonNLColumn;
+                    this.nonNLColumn = this.column;
+                }
+                this.lastNonNLColumn = this.nonNLColumn;
+                this.nonNLColumn = this.column;
+                break;
+        }
+        return token;
+    }
+
+    private at(): Token {
+        let token = this.tokens[0] as Token;
+        while(token.type == TokenType.NewLine) {
+            this.shift();
+            token = this.tokens[0] as Token;
+        }
+        return token;
+    }
+
     private not_eof(): boolean {
-        return this.tokens[0].type != TokenType.EOF;
+        return this.at().type != TokenType.EOF;
     }
 
-    private at() {
-        return this.tokens[0] as Token;
-    }
-
-    private eat() {
-        const prev = this.tokens.shift() as Token;
+    private eat(): Token {
+        let prev;
+        do {
+            prev = this.shift();
+        } while (prev.type == TokenType.NewLine);
 
         return prev;
     }
 
-    private expect(type: TokenType, err: string) {
-        const prev = this.tokens.shift() as Token;
+    private expect(type: TokenType, err: string): Token {
+        const prev = this.eat();
+
         if (!prev || prev.type != type) {
-            console.error(`Parser error:\n`, err, prev, "Expecting: ", type);
+            console.error(`Parser error: (Ln ${this.lastNonNLLine}, Col ${this.lastNonNLColumn + 1})\n`, err, "Expecting:", type);
             process.exit(1)
         }
 
@@ -37,7 +85,7 @@ export default class Parser {
 
         // Parse until end of file
         while (this.not_eof()) {
-            program.body.push(this.parse_stmt())
+            program.body.push(this.parse_stmt());
         }
         return program;
     }
@@ -53,6 +101,9 @@ export default class Parser {
                 return this.parse_if_statement();
             case TokenType.For:
                 return this.parse_for_statement();
+            case TokenType.NewLine:
+                this.at(); // will remove all new lines
+                return this.parse_stmt();
             default:
                 return this.parse_expr();
         }
@@ -81,7 +132,7 @@ export default class Parser {
 
         this.expect(TokenType.Semicolon, "Semicolon (\";\") expected following \"test expression\" in \"for\" statement.");
 
-        const update = this.parse_assignment_expr();
+        const update = this.parse_expr();
 
         this.expect(TokenType.CloseParen, "Closing parenthesis (\"(\") expected following \"additive expression\" in \"for\" statement.");
 
@@ -99,16 +150,7 @@ export default class Parser {
         this.eat(); // eat if keyword
         this.expect(TokenType.OpenParen, "Opening parenthesis (\"(\") expected following \"if\" statement.");
 
-        let test = this.parse_expr();
- 
-        if(this.at().type == TokenType.And || this.at().type == TokenType.Bar) {
-            test = {
-                kind: "BinaryExpr",
-                left: test,
-                operator: this.eat().value,
-                right: this.parse_expr(),
-            } as BinaryExpr;
-        }
+        const test = this.parse_expr();
 
         this.expect(TokenType.CloseParen, "Closing parenthesis (\"(\") expected following \"if\" statement.");
 
@@ -183,7 +225,26 @@ export default class Parser {
     }
 
     private parse_expr(): Expr {
-        return this.parse_assignment_expr();
+        const data = this.parse_assignment_expr();
+
+        // before returning, if it's a ternary we don't want to return the direct value.
+        if(this.at().type == TokenType.Ternary) {
+            if(data.kind != "BinaryExpr" && data.kind != "Identifier") {
+                throw new Error("Expected BinaryExpr or Identifier following ternary expression.");
+            }
+            this.eat();
+
+            const expr = this.parse_expr();
+
+            if(expr.kind != "BinaryExpr" || (expr as BinaryExpr).operator != "|") {
+                throw new Error("Bar (\"|\") expected following left side of ternary operator (\"->\").");
+            }
+            
+            const ifStmt = { kind: "IfStatement", test: data, body: [(expr as BinaryExpr).left], alternate: [(expr as BinaryExpr).right] } as IfStatement;
+            return {kind:"CallExpr",args:[],caller:{kind:"FunctionDeclaration",parameters:[],name:"<anonymous>",body:[ifStmt]} as FunctionDeclaration} as CallExpr;
+        }
+
+        return data;
     }
 
     private parse_assignment_expr(): Expr {
@@ -191,7 +252,7 @@ export default class Parser {
 
         if (this.at().type == TokenType.Equals) {
             this.eat(); // advance past the equals
-            const value = this.parse_assignment_expr();
+            const value = this.parse_expr();
 
             return { value, assigne: left, kind: "AssignmentExpr" } as AssignmentExpr;
         }
@@ -209,14 +270,22 @@ export default class Parser {
             left = {
                 kind: "BinaryExpr",
                 left, right, operator
-            } as BinaryExpr
+            } as BinaryExpr;
+            while(this.at().type == TokenType.And || this.at().type == TokenType.Bar) {
+                left = {
+                    kind: "BinaryExpr",
+                    left,
+                    operator: this.eat().value,
+                    right: this.parse_expr(),
+                } as BinaryExpr;
+            }
         }
 
         return left;
     }
 
     private parse_try_catch_expr(): Expr {
-        if (this.at().value !== 'try') {
+        if (this.at().type != TokenType.Identifier || this.at().value !== 'try') {
             return this.parse_and_statement()
         }
 
@@ -224,7 +293,7 @@ export default class Parser {
 
         const body = this.parse_block_statement();
 
-        if (this.at().value !== 'catch') throw "\"try\" statement must be followed by a \"catch\" statement."
+        if (this.at().type != TokenType.Identifier || this.at().value !== 'catch') throw "\"try\" statement must be followed by a \"catch\" statement."
 
         this.eat();
 
@@ -247,7 +316,10 @@ export default class Parser {
 
         while (this.not_eof() && this.at().type != TokenType.CloseBrace) {
             // { key: val, key2: val }
-            const key = this.expect(TokenType.Identifier, "Identifier expected following \"Object\" expression.").value;
+            if(this.at().type != TokenType.Identifier && this.at().type != TokenType.String) {
+                throw new Error("Identifier expected following \"Object\" expression.");
+            }
+            const key = this.eat().value;
 
             // Allows shorthand key: pair -> { key, }
             if (this.at().type == TokenType.Comma) {
@@ -305,7 +377,7 @@ export default class Parser {
             left = {
                 kind: "BinaryExpr",
                 left, right, operator
-            } as BinaryExpr
+            } as BinaryExpr;
         }
 
         return left;
@@ -320,7 +392,7 @@ export default class Parser {
             left = {
                 kind: "BinaryExpr",
                 left, right, operator
-            } as BinaryExpr
+            } as BinaryExpr;
         }
 
         return left;
@@ -364,10 +436,10 @@ export default class Parser {
 
     // foo(x = 5, v = "Bar")
     private parse_args_list(): Expr[] {
-        const args = [this.parse_assignment_expr()];
+        const args = [this.parse_expr()];
 
         while (this.at().type == TokenType.Comma && this.eat()) {
-            args.push(this.parse_assignment_expr());
+            args.push(this.parse_expr());
         }
 
         return args;
@@ -431,7 +503,7 @@ export default class Parser {
             case TokenType.String:
                 return {
                     kind: "StringLiteral",
-                    value: this.eat().value
+                    value: this.eat().value,
                 } as StringLiteral;
             case TokenType.Fn:
                 return this.parse_function_declaration();
@@ -439,12 +511,12 @@ export default class Parser {
                 this.eat(); // eat the opening paren
                 const value = this.parse_expr();
 
-                this.expect(TokenType.CloseParen, "Unexpected token (?) found while parsing arguments."); // closing paren
+                this.expect(TokenType.CloseParen, `Unexpected token (${JSON.stringify(this.at().toString())}) found while parsing arguments.`); // closing paren
 
                 return value;
             }
             default:
-                console.error("Unexpected token found during parsing!", this.at());
+                console.error("Unexpected token found during parsing!", this.at().toString());
                 process.exit(1);
         }
     }

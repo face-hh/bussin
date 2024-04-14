@@ -15,14 +15,12 @@ We, at Bussin, believe everyone should be entertained while coding. Meet our alt
 Inside **Bussin X**, you *can* use BS syntax, however, it's recommended to use the **BSX** syntax described below. 
 
 ### New!
-- More math. `math.e`, `math.toString(5)`, `math.toNumber("5")`
+- Updated fetch. `fetch("https://example.com/")(bruh(data) { waffle(data) })`
+- Bussin Object Notation 🗣️💯🔥. `bson.parse("[1, 2, 3]")`, `bson.stringify([1, 2, 3])`
+- Websockets. `lit ws be websocket("wss://thissiteis.fake/?EIO=4&transport=websocket") rn`, `ws.send("Bussin X")`
+- Math number stuff. `math.e`, `parseNumber("5")`
 - More string functions. `trim("  Hello  ")`, `splitstr("Hello,There", ",")`
 - Comments. `lit x be 5 + 10 rn /* this code is bussin */`
-- Arrays! `lit arr be [1,2,3,4] rn`
-- `regex` is available for matching regex. `lit matches be regex.match(string, "/word/g")`
-- `import` will import data from another file. `lit db be import("./database.bsx") rn`
-- `fetch` for fetching websites. `lit x be fetch("https://example.com/") rn`
-- `objects` is available for dynamic object keys. `objects.get(obj, yap("Name> "))`
 
 ## Variables
 Mutable variables are created with:
@@ -44,14 +42,15 @@ lit x be "Hello, World!" rn
 You can also insert variables by using:
 ```rs
 lit x be 0 rn
-lit y be strcon("Hello, ", x) rn
+lit y be strcon("Hello, ", x) rn // "Hello, 0"
 ```
 Or you can format your string to include variables:
 ```rs
-waffle(format("Hello, ${}", "World"))
+waffle(format("Hello, ${}", "World")) // "Hello, World"
 ```
 However, you must use your regional currency symbol.
 ```rs
+// All print "Hello, World"
 waffle(format("Hello, ${}", "World"))
 waffle(format("Hello, ¥{}", "World"))
 waffle(format("Hello, {}€", "World"))
@@ -59,8 +58,8 @@ waffle(format("Hello, {}£", "World"))
 ```
 You can also use bussin's helper functions to simplify your experience:
 ```rs
-lit x be trim(" hello ") rn
-lit y be splitstr("Hello,World", ",") rn
+lit x be trim(" hello ") rn // hello
+lit y be splitstr("Hello,World", ",") rn // ["Hello", "World"]
 ```
 
 ### Numbers
@@ -68,7 +67,8 @@ Numbers are simple:
 ```rs
 lit x be 34 rn
 lit y be 12 rn
-lit z be x minus y rn
+lit z be x minus y rn // 22
+lit a be parseNumber("5") rn // 5
 ```
 
 ### Null
@@ -90,23 +90,34 @@ lit x be cap rn
 lit obj be { key: nocap, x } rn
 
 obj.key be cap
-waffle(obj.key)
+waffle(obj.key) // false
 ```
+Getting/setting dynamic keys is possible using the global "objects" variable:
+```rs
+objects.get(obj, "key") // e.g. true
+objects.set(obj, "key", nocap)
+```
+You can also get info on the keys of an object with it:
+```rs
+objects.hasKey(obj, "key") // e.g. true
+objects.keys(obj) // e.g. ["key1", "key2", "key3"]
+```
+
 ### Arrays
 Arrays contain information without needing keys. Bussin X has them as well:
 ```rs
 lit arr be [ 1, 2, 3, 4 ] rn
 
-arr[1] = 5
+arr[0] = 5
 
-waffle(arr)
+waffle(arr) // [5, 2, 3, 4]
 ```
 Arrays start at 0.
 
 ## Comments
 You can write comments like this:
 ```rs
-lit x be nocap rn // does stuff
+// single line
 /*
 multi line
 */
@@ -207,21 +218,16 @@ Cannot resolve 'hogrider' as it does not exist.
 ### Math
 You can utilize the `math` helper by using:
 ```rs
-waffle(nerd.random())
-waffle(nerd.sqrt(144))
-waffle(nerd.pi)
-waffle(nerd.e)
+waffle(nerd.random(0, 100)) // integer from 0-100
+waffle(nerd.sqrt(144)) // 12
+waffle(nerd.pi) // 3.141592653589793
+waffle(nerd.e) // 2.718281828459045
 ```
 We also added helper functions for your anxiety:
 ```rs
-waffle(nerd.ceil(3.4))
-waffle(nerd.round(3.9))
-waffle(nerd.abs(-2))
-```
-Want to convert some number types?
-```rs
-lit x be math.toString(5) rn
-lit y be math.toNumber("5") rn
+waffle(nerd.ceil(3.4)) // 4
+waffle(nerd.round(3.9)) // 4
+waffle(nerd.abs(-2)) // 2
 ```
 You can also simplify your math equations:
 ```rs
@@ -261,11 +267,32 @@ If imported, the result will be an object which you can do obj.waffleStuff and o
 ### Fetch
 You can fetch websites like this:
 ```rs
-lit res be fetch("https://example.com/") rn
+fetch("https://example.com/")(bruh(data) {
+    waffle(data)
+})
 ```
 You can also set the method, body, and content type like this:
 ```rs
-lit res be fetch("https://example.com/", { method: "POST", body: "{\"bussin\":\"x\"}", content_type: "application/json" })
+fetch("https://example.com/", { method: "POST", body: "{\"bussin\":\"x\"}", content_type: "application/json" })(bruh(data) {
+    waffle(data)
+})
+```
+
+### Websockets
+You can connect to a websocket like this:
+```rs
+lit ws be websocket("wss://thissiteis.fake/?EIO=4&transport=websocket") rn
+```
+You can assign listeners for socket events like this:
+```rs
+ws.onmessage = bruh(msg) { }
+ws.onerror = bruh(err) { }
+ws.onopen = bruh() { }
+ws.onclose = bruh() { }
+```
+You can transmit data through the socket like this:
+```rs
+ws.send("Bussin X")
 ```
 
 ### Regex
@@ -275,13 +302,30 @@ lit string be "Hello World" rn
 
 lit matches be regex.match(string, "/World/g") rn
 
-waffle(matches) /* [ 'World' ] */
+waffle(matches) // [ 'World' ]
 ```
 And this:
 ```rs
 lit string be "Hello World" rn
 
-waffle(regex.replace(string, "/World/g", "Everybody")) /* Hello Everybody */
+waffle(regex.replace(string, "/World/g", "Everybody")) // Hello Everybody
+```
+
+### BSON
+Bussin Object Notation 🗣️💯🔥 can be used with the `bson` object:
+```rs
+bson.parse("{\"a\": 1, \"b\": 2, \"c\": 3}") // {a: 1, b: 2, c: 3}
+bson.parse("[1, 2, 3]") // [1, 2, 3]
+bson.stringify({a: 1, b: 2, c: 3}) // '{"a": 1, "b": 2, "c": 3}'
+bson.stringify([1, 2, 3]) // "[1, 2, 3]"
+```
+
+### Ternary
+Bussin supports ternary operators like this:
+```rs
+lit x be 10 rn
+lit y be 5 rn
+lit z be x thicc y then "thicc" ornot "smol" rn // "thicc"
 ```
 
 ### Exit
@@ -308,12 +352,12 @@ fuck_around {
 }
 ```
 
-### New in 1.1.0: yapping
+### User Input
 ```rs
-lit x be yap("watcho name > ") rn
-waffle(x)
+yap("watcho name > ")(bruh(x) {
+    waffle(x)
+})
 ```
-**Note**: The user won't see the text they type, but you will successfully receive the text after the user presses Enter.
 
 # Credits
 - Huge thanks to [Tyler Laceby](https://github.com/tlaceby) for creating the [Guide to Interpreters](https://github.com/tlaceby/guide-to-interpreters-series)!

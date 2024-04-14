@@ -1,16 +1,14 @@
+// Begin prior to imports
+const begin = Date.now();
+
 import Parser from "./frontend/parser";
+
 import { createGlobalEnv } from "./runtime/environment";
 import { evaluate } from "./runtime/interpreter";
-
-import * as readline from 'readline/promises';
 import { readFileSync } from "fs";
 import { get_currency, transcribe } from "./utils/transcriber";
 import { MK_STRING } from "./runtime/values";
-
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
+import { runtimeToJS } from "./runtime/eval/native-fns";
 
 const args = process.argv;
 args.shift();
@@ -24,8 +22,6 @@ if(file) {
 }
 
 async function run(filename: string) {
-
-    const begin = Date.now();
 
     let input = readFileSync(filename, 'utf-8') + "\nfinishExit()";
     
@@ -45,21 +41,29 @@ async function run(filename: string) {
 }
 
 async function repl() {
+    const readline = await import('readline/promises');
+
     const parser = new Parser();
     const env = createGlobalEnv();
 
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+
     console.log("Repl v1.0 (Bussin)");
 
-    const input = await rl.question("> ");
+    // eslint-disable-next-line no-constant-condition
+    while(true) {
+        const input = await rl.question("> ");
 
-    const program = parser.produceAST(input);
+        const program = parser.produceAST(input);
 
-    try {
-        const result = evaluate(program, env);
-        console.log(result);
-    } catch(err) {
-        console.log(err);
+        try {
+            const result = runtimeToJS(evaluate(program, env));
+            console.log(result);
+        } catch(err) {
+            console.log(err);
+        }
     }
-
-    repl();
 }

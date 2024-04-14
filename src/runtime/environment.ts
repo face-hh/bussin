@@ -1,17 +1,21 @@
 
 import { execSync } from 'child_process';
-import request, { HttpVerb } from 'sync-request';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const rl = require('readline-sync')
 import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import { WebSocket } from 'ws';
+import UserAgent = require('user-agents');
+import * as readline from 'readline/promises';
 
 import { Identifier, MemberExpr } from '../frontend/ast';
-import { printValues } from './eval/native-fns';
+import { runtimeToJS, printValues, jsToRuntime } from './eval/native-fns';
 import { ArrayVal, FunctionValue, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, MK_ARRAY, NumberVal, ObjectVal, RuntimeVal, StringVal } from "./values";
 import { eval_function } from './eval/expressions';
 import Parser from '../frontend/parser';
 import { evaluate } from './interpreter';
 import { transcribe } from '../utils/transcriber';
+import axios from 'axios';
 
 export function createGlobalEnv(beginTime: number = -1, filePath: string = __dirname, args: RuntimeVal[] = [], currency: string = "-"): Environment {
     const env = new Environment();
@@ -43,6 +47,13 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
         return MK_STRING(str.charAt(pos));
     }), true);
 
+    env.declareVar("startsWith", MK_NATIVE_FN((args) => {
+        const str = (args.shift() as StringVal).value;
+        const str2 = (args.shift() as StringVal).value;
+
+        return MK_BOOL(str.startsWith(str2));
+    }), true);
+
     env.declareVar("trim", MK_NATIVE_FN((args) => {
         const str = (args.shift() as StringVal).value;
 
@@ -56,21 +67,31 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
         return MK_ARRAY(str.split(splitat).map(val => MK_STRING(val)));
     }), true);
 
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
     env.declareVar("input", MK_NATIVE_FN((args) => {
         const cmd = (args.shift() as StringVal).value;
 
-        const result = rl.question(cmd);
-        if (result !== null) {
-            return MK_STRING(result);
-        } else {
+        return MK_NATIVE_FN((args) => {
+            waitDepth++;
+            const fn = args.shift() as FunctionValue;
+            const now = Date.now();
+            (async () => {
+                const result = await rl.question(cmd);
+                eval_function(fn, [MK_STRING(result)]);
+                slept += Date.now() - now;
+                lowerWaitDepth();
+            })();
             return MK_NULL();
-        }
+        });
     }), true);
 
     env.declareVar("math", MK_OBJECT(
         new Map()
-            .set("pi", Math.PI)
-            .set("e", Math.E)
+            .set("pi", MK_NUMBER(Math.PI))
+            .set("e", MK_NUMBER(Math.E))
             .set("sqrt", MK_NATIVE_FN((args) => {
                 const arg = (args[0] as NumberVal).value;
                 return MK_NUMBER(Math.sqrt(arg));
@@ -95,16 +116,13 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
                 const arg = (args[0] as NumberVal).value;
                 return MK_NUMBER(Math.abs(arg));
             }))
-            .set("toString", MK_NATIVE_FN((args) => {
-                const arg = (args[0] as NumberVal).value;
-                return MK_STRING(arg.toString());
-            }))
-            .set("toNumber", MK_NATIVE_FN((args) => {
-                const arg = (args[0] as StringVal).value;
-                const number = parseFloat(arg);
-                return MK_NUMBER(number);
-            }))
     ), true)
+
+    env.declareVar("parseNumber", MK_NATIVE_FN((args) => {
+        const arg = (args[0] as StringVal).value;
+        const number = parseFloat(arg);
+        return MK_NUMBER(number);
+    }), true);
 
     env.declareVar("strcon", MK_NATIVE_FN((args,) => {
         let res = '';
@@ -136,45 +154,141 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
 
     env.declareVar("time", MK_NATIVE_FN(() => MK_NUMBER(Date.now())), true);
 
-    let timeoutDepth = 0;
+    let waitDepth = 0;
+    let slept = 0;
+    let net = 0;
     let shouldExit = false;
 
+    function lowerWaitDepth() {
+        waitDepth--;
+        if(waitDepth <= 0 && shouldExit) {
+            closeBussin();
+        }
+    }
+
+    const timeoutIds: {[key: number]: NodeJS.Timeout} = {};
+
+    function generateTimeoutId(tm: NodeJS.Timeout): number {
+        let id: number;
+        do {
+            id = Math.floor(Math.random() * 999999);
+        } while (timeoutIds[id] != null)
+        timeoutIds[id] = tm;
+        return id;
+    }
+    
     env.declareVar("setTimeout", MK_NATIVE_FN((args) => {
         const func = args.shift() as FunctionValue;
         const time = args.shift() as NumberVal;
-        timeoutDepth++;
-        setTimeout(() => {
+        waitDepth++;
+        const bt = Date.now();
+        const tm = setTimeout(() => {
             eval_function(func, []); // No args can be present here, as none are able to be given.
-            timeoutDepth--;
-            if(timeoutDepth == 0 && shouldExit) {
-                process.exit();
-            }
+            lowerWaitDepth();
+            slept += Date.now() - bt;
         }, time.value);
-        return MK_NULL();
+        return MK_NUMBER(generateTimeoutId(tm));
     }), true);
 
     env.declareVar("setInterval", MK_NATIVE_FN((args) => {
         const func = args.shift() as FunctionValue;
         const time = args.shift() as NumberVal;
-        timeoutDepth = Infinity; // Intervals won't end so...
-        setInterval(() => eval_function(func, []), time.value); // No args can be present here, as none are able to be given.
-        return MK_NULL();
+        waitDepth++;
+        let bt = Date.now();
+        const iv = setInterval(() => {
+            eval_function(func, []);
+            slept += Date.now() - bt;
+            bt = Date.now();
+        }, time.value); // No args can be present here, as none are able to be given.
+        return MK_NUMBER(generateTimeoutId(iv));
+    }), true);
+
+    env.declareVar("clearTimeout", MK_NATIVE_FN((args) => {
+        const id = args.shift() as NumberVal;
+        if(timeoutIds[id.value]) {
+            clearTimeout(timeoutIds[id.value]);
+            lowerWaitDepth();
+            return MK_BOOL();
+        }
+        return MK_BOOL(false);
+    }), true);
+    env.declareVar("clearInterval", MK_NATIVE_FN((args) => {
+        const id = args.shift() as NumberVal;
+        if(timeoutIds[id.value]) {
+            clearInterval(timeoutIds[id.value]);
+            lowerWaitDepth();
+            return MK_BOOL();
+        }
+        return MK_BOOL(false);
+    }), true);
+
+    env.declareVar("websocket", MK_NATIVE_FN((args) => {
+        const url = args.shift() as StringVal;
+
+        const ua = (new UserAgent()).toString();
+        const ws = new WebSocket(url.value, { headers: { "user-agent": ua } });
+
+        const now = Date.now();
+
+        waitDepth++;
+        ws.addEventListener("close", () => {
+            net += Date.now() - now;
+            lowerWaitDepth();
+        });
+
+        return MK_OBJECT(
+            new Map()
+                .set("onmessage", MK_NATIVE_FN((args) => {
+                    const fn = args.shift() as FunctionValue;
+                    ws.onmessage = (event) => eval_function(fn, [MK_STRING(event.data.toString())]);
+                    return MK_NULL();
+                }))
+                .set("onopen", MK_NATIVE_FN((args) => {
+                    const fn = args.shift() as FunctionValue;
+                    ws.onopen = () => eval_function(fn, []);
+                    return MK_NULL();
+                }))
+                .set("onclose", MK_NATIVE_FN((args) => {
+                    const fn = args.shift() as FunctionValue;
+                    ws.onclose = () => eval_function(fn, []);
+                    return MK_NULL();
+                }))
+                .set("onerror", MK_NATIVE_FN((args) => {
+                    const fn = args.shift() as FunctionValue;
+                    ws.onerror = (error) => eval_function(fn, [MK_STRING(error.message)]);
+                    return MK_NULL();
+                }))
+                .set("send", MK_NATIVE_FN((args) => {
+                    const data = args.shift() as StringVal;
+                    ws.send(data.value);
+                    return MK_NULL();
+                }))
+        )
     }), true);
 
     env.declareVar("fetch", MK_NATIVE_FN((args) => {
-        const url = args.shift() as StringVal;
+        const url = (args.shift() as StringVal).value;
         const options = args.shift() as ObjectVal;
     
         const method = options == undefined ? "GET" : (options.properties.get("method") as StringVal)?.value ?? "GET";
         const body = options == undefined ? null : (options.properties.get("body") as StringVal)?.value ?? null;
         const content_type = options == undefined ? "text/plain" : (options.properties.get("content_type") as StringVal)?.value ?? "text/plain";
-
-        const res = request(method as HttpVerb, url.value, { body: body, headers: { "content-type": content_type } });
-        if (res.statusCode !== 200) {
-            throw new Error("Failed to fetch data: " + res.body.toString('utf8'));
-        }
-    
-        return MK_STRING(res.body.toString('utf8'));
+        
+        return MK_NATIVE_FN((args) => {
+            const fn = args.shift() as FunctionValue;
+            waitDepth++;
+            const now = Date.now();
+            (async () => {
+                const req = await axios.request({url, method, headers: { "content-type": content_type }, data: body });
+                if (req.status !== 200) {
+                    throw new Error("Failed to fetch data: " + req.data.toString('utf8'));
+                }
+                eval_function(fn, [MK_STRING(req.data.toString("utf-8"))]);
+                net += Date.now() - now;
+                lowerWaitDepth();
+            })();
+            return MK_NULL();
+        });
     }), true);
 
     function localPath(path: string) {
@@ -186,6 +300,10 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
 
     env.declareVar("fs", MK_OBJECT(
         new Map()
+            .set("tmpdir", MK_STRING(os.tmpdir()))
+            .set("appdata", MK_STRING(process.env.APPDATA || (process.platform === 'darwin' ? path.join(os.homedir(), 'Library', 'Application Support') : path.join(os.homedir(), '.local', 'share'))))
+            .set("home", MK_STRING(os.homedir()))
+            .set("desktop", MK_STRING(path.join(os.homedir(), "Desktop")))
             .set("read", MK_NATIVE_FN((args) => {
                 const path = localPath((args.shift() as StringVal).value);
                 const encoding = (args.shift() as StringVal)?.value ?? "utf8";
@@ -198,9 +316,10 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
                 fs.writeFileSync(path, data);
                 return MK_NULL();
             }))
-            .set("exists", MK_NATIVE_FN((args) => {
+            .set("mkdir", MK_NATIVE_FN((args) => {
                 const path = localPath((args.shift() as StringVal).value);
-                return MK_BOOL(fs.existsSync(path));
+                fs.mkdirSync(path);
+                return MK_NULL();
             }))
             .set("rm", MK_NATIVE_FN((args) => {
                 const path = localPath((args.shift() as StringVal).value);
@@ -209,8 +328,12 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
             }))
             .set("rmdir", MK_NATIVE_FN((args) => {
                 const path = localPath((args.shift() as StringVal).value);
-                fs.rmdirSync(path);
+                fs.rmdirSync(path, { recursive: true });
                 return MK_NULL();
+            }))
+            .set("exists", MK_NATIVE_FN((args) => {
+                const path = localPath((args.shift() as StringVal).value);
+                return MK_BOOL(fs.existsSync(path));
             }))
     ), true);
 
@@ -234,6 +357,10 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
                 obj.set(key, value);
                 return MK_NULL();
             }))
+            .set("keys", MK_NATIVE_FN((args) => {
+                const obj = (args.shift() as ObjectVal).properties;
+                return MK_ARRAY(Array.from(obj.keys()).map(MK_STRING));
+            }))
     ), true);
 
     env.declareVar("len", MK_NATIVE_FN((args) => {
@@ -249,6 +376,18 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
                 throw "Cannot get length of type: " + arg.type;
         }
     }), true);
+
+    env.declareVar("base64", MK_OBJECT(
+        new Map()
+            .set("encode", MK_NATIVE_FN((args) => {
+                const str = args.shift() as StringVal;
+                return MK_STRING(btoa(str.value));
+            }))
+            .set("decode", MK_NATIVE_FN((args) => {
+                const str = args.shift() as StringVal;
+                return MK_STRING(atob(str.value));
+            }))
+    ), true);
 
     env.declareVar("import", MK_NATIVE_FN((args) => {
         const path = localPath((args.shift() as StringVal).value);
@@ -266,6 +405,33 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
 
         return evaluate(program, env); // this will evaluate and return the last value emitted. neat
     }), true);
+
+    // Bussin Object Notation!!!
+    env.declareVar("bson", MK_OBJECT(
+        new Map()
+            .set("stringify", MK_NATIVE_FN((args) => {
+                if(args[0].type == "object") {
+                    const obj = args.shift() as ObjectVal;
+                    return MK_STRING(JSON.stringify(runtimeToJS(obj)));
+                } else if (args[0].type == "array") {
+                    const arr = args.shift() as ArrayVal;
+                    return MK_STRING(JSON.stringify(runtimeToJS(arr)));
+                }
+                throw "Not json stringifiable type: " + args[0].type;
+            }))
+            .set("parse", MK_NATIVE_FN((args) => {
+                const string = (args.shift() as StringVal).value;
+                const jsonObj: {[key: string]: unknown} = JSON.parse(string);
+                if(Array.isArray(jsonObj)) {
+                    const rtArr: RuntimeVal[] = [];
+                    jsonObj.forEach(val => rtArr.push(jsToRuntime(val)))
+                    return MK_ARRAY(rtArr);
+                }
+                const rtObj = new Map();
+                Object.keys(jsonObj).forEach((key) => rtObj.set(key, jsToRuntime(jsonObj[key])));
+                return MK_OBJECT(rtObj);
+            }))
+    ), true);
 
     function parseRegex(regex: string): RegExp {
         const split = regex.split("/");
@@ -301,11 +467,10 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
                 return MK_STRING(replaced);
             }))
     ), true);
-	
 
     function closeBussin(): null {
         if(beginTime != -1) {
-            console.log(`\nBussin executed in ${(Date.now() - beginTime).toLocaleString()}ms.`);
+            console.log(`\nBussin executed in ${(Date.now() - beginTime).toLocaleString()}ms${slept > 0 ? ` (${slept.toLocaleString()}ms slept)` : ""}${net > 0 ? ` (${net.toLocaleString()}ms networking)` : ""}.`);
         }
         process.exit();
     }
@@ -313,7 +478,7 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
     env.declareVar("exit", MK_NATIVE_FN(() => closeBussin()), true);
 
     env.declareVar("finishExit", MK_NATIVE_FN(() => {
-        if(timeoutDepth == 0) {
+        if(waitDepth == 0) {
             closeBussin();
         } else {
             shouldExit = true;
@@ -363,16 +528,21 @@ export default class Environment {
     }
 
     public lookupOrMutObject(expr: MemberExpr, value?: RuntimeVal, property?: Identifier): RuntimeVal {
-        if (expr.object.kind === 'MemberExpr') return this.lookupOrMutObject(expr.object as MemberExpr, value, expr.property as Identifier);
+        let pastVal;
+        if (expr.object.kind === 'MemberExpr') {
+            // We will get the expr.object property of the expr.object -- since we are using this just to get the value, we will null the value as it will not be changed
+            // This will then, in cases like a.b.c, will return a.b -- now this a.b will be put into pastVal recursively and then it will get c of a.b
+            // (Funny how I spent like 20 minutes debugging this just to realize that it was passing value in and then causing it to return the value which isn't an array/object)
+            pastVal = this.lookupOrMutObject(expr.object as MemberExpr, null, (expr.object as MemberExpr).property as Identifier);
+        } else {
+            const varname = (expr.object as Identifier).symbol;
+            const env = this.resolve(varname);
 
-        const varname = (expr.object as Identifier).symbol;
-        const env = this.resolve(varname);
-
-        let pastVal = env.variables.get(varname);
+            pastVal = env.variables.get(varname);
+        }
 
         switch(pastVal.type) {
             case "object": {
-
                 const currentProp = (expr.property as Identifier).symbol;
                 const prop = property ? property.symbol : currentProp;
 
@@ -384,11 +554,12 @@ export default class Environment {
             }
             case "array": {
 
-                let num: RuntimeVal | number = evaluate(expr.property, this);
+                // Will evaluate the expression. Numbers will stay, but a variable will work. This allows for array[0] and array[ident].
+                const numRT: RuntimeVal = evaluate(expr.property, this);
 
-                if(num.type != "number") throw "Arrays do not have keys: " + expr.property;
+                if(numRT.type != "number") throw "Arrays do not have keys: " + expr.property;
 
-                num = (num as NumberVal).value;
+                const num = (numRT as NumberVal).value;
 
                 if(value) (pastVal as ArrayVal).values[num] = value;
 
