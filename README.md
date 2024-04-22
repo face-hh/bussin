@@ -1,3 +1,5 @@
+Hi I'm also creating my own programming language and I just wanted to know how you have made the Syntax highlighting in you .bs files.
+
 An esoteric programming language, in TypeScript for heaven's sake.
 
 *P.S. Install the [VSCode extension](https://marketplace.visualstudio.com/items?itemName=face-hh.bussin) for syntax highlighting!*
