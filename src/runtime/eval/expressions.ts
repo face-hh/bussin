@@ -1,17 +1,18 @@
 import { ArrayLiteral, AssignmentExpr, BinaryExpr, CallExpr, Identifier, MemberExpr, ObjectLiteral } from "../../frontend/ast";
+import ReturnValue from "../../utils/return-error";
 import Environment from "../environment";
 import { evaluate } from "../interpreter";
 import { NumberVal, RuntimeVal, MK_NULL, ObjectVal, NativeFnValue, FunctionValue, BooleanVal, StringVal, NullVal, MK_NUMBER, MK_BOOL, ArrayVal } from "../values";
 
 export function eval_numeric_binary_expr(lhs: RuntimeVal, rhs: RuntimeVal, operator: string): RuntimeVal {
 
-    switch(operator) {
+    switch (operator) {
         case "|": {
-            if(lhs.type !== "boolean" || rhs.type !== "boolean") return MK_BOOL(false);
+            if (lhs.type !== "boolean" || rhs.type !== "boolean") return MK_BOOL(false);
             return MK_BOOL((lhs as BooleanVal).value || (rhs as BooleanVal).value);
         }
         case "&&":
-            if(lhs.type !== "boolean" || rhs.type !== "boolean") return MK_BOOL(false);
+            if (lhs.type !== "boolean" || rhs.type !== "boolean") return MK_BOOL(false);
             return MK_BOOL((lhs as BooleanVal).value && (rhs as BooleanVal).value);
         case "!=":
             return equals(lhs, rhs, false);
@@ -22,7 +23,7 @@ export function eval_numeric_binary_expr(lhs: RuntimeVal, rhs: RuntimeVal, opera
 
             const llhs = lhs as NumberVal;
             const rrhs = rhs as NumberVal;
-    
+
             switch (operator) {
                 case "+":
                     return MK_NUMBER(llhs.value + rrhs.value);
@@ -64,7 +65,7 @@ function equals(lhs: RuntimeVal, rhs: RuntimeVal, strict: boolean): RuntimeVal {
         case 'object':
             return MK_BOOL(compare((lhs as ObjectVal).properties, (rhs as ObjectVal).properties));
         case 'array':
-            return MK_BOOL(compare((lhs as ArrayVal).values, (rhs as ArrayVal).values ));
+            return MK_BOOL(compare((lhs as ArrayVal).values, (rhs as ArrayVal).values));
         default:
             throw `RunTime: Unhandled type in equals function: ${lhs.type}, ${rhs.type}`
     }
@@ -108,7 +109,7 @@ export function eval_object_expr(obj: ObjectLiteral, env: Environment): RuntimeV
 export function eval_array_expr(obj: ArrayLiteral, env: Environment): RuntimeVal {
     const array = { type: "array", values: [] } as ArrayVal;
 
-    for(const value of obj.values) {
+    for (const value of obj.values) {
         const runtimeVal = evaluate(value, env);
 
         array.values.push(runtimeVal);
@@ -119,6 +120,7 @@ export function eval_array_expr(obj: ArrayLiteral, env: Environment): RuntimeVal
 
 export function eval_function(func: FunctionValue, args: RuntimeVal[]): RuntimeVal {
     const scope = new Environment(func.declarationEnv);
+    scope.canHaveReturn = true;
 
     // Create the variables for the parameters list
     for (let i = 0; i < func.parameters.length; i++) {
@@ -127,22 +129,28 @@ export function eval_function(func: FunctionValue, args: RuntimeVal[]): RuntimeV
         const varname = func.parameters[i];
         scope.declareVar(varname, args[i], false);
     }
-
-    let result: RuntimeVal = MK_NULL();
-
+    let result: RuntimeVal | NullVal = MK_NULL();
     // Evaluate the function body line by line
     for (const stmt of func.body) {
-        result = evaluate(stmt, scope);
+        try {
+            result = evaluate(stmt, scope);
+        } catch (e) { // Only function handles propogated (rise up and shine boy) return, all else throws error
+            if (e instanceof ReturnValue) {
+                return e.message;
+            } else {
+                throw e;
+            }
+        }
     }
 
-    return result;
+    return scope.enableReturn ? MK_NULL() : result;
 }
 
 export function eval_call_expr(expr: CallExpr, env: Environment): RuntimeVal {
     const args = expr.args.map(arg => evaluate(arg, env));
     const fn = evaluate(expr.caller, env);
 
-    if(fn != null) {
+    if (fn != null) {
         if (fn.type == "native-fn") {
             return (fn as NativeFnValue).call(args, env);
         }
@@ -157,8 +165,12 @@ export function eval_call_expr(expr: CallExpr, env: Environment): RuntimeVal {
 }
 
 export function eval_member_expr(env: Environment, node?: AssignmentExpr, expr?: MemberExpr): RuntimeVal {
-    if (expr) return env.lookupOrMutObject(expr);
-    if (node) return env.lookupOrMutObject(node.assigne as MemberExpr, evaluate(node.value, env));
-    
+    try {
+        if (expr) return env.lookupOrMutObject(expr);
+        if (node) return env.lookupOrMutObject(node.assigne as MemberExpr, evaluate(node.value, env));
+    } catch (e) {
+        console.error(e)
+    }
+
     throw `Evaluating a member expression is not possible without a member or assignment expression.`
 }

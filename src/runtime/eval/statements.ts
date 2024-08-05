@@ -1,4 +1,5 @@
 import { FunctionDeclaration, IfStatement, Program, Stmt, VarDeclaration, ForStatement, TryCatchStatement } from "../../frontend/ast";
+import ReturnError from "../../utils/return-error";
 import Environment from "../environment";
 import { evaluate } from "../interpreter";
 import { BooleanVal, FunctionValue, MK_NULL, RuntimeVal } from "../values";
@@ -35,7 +36,6 @@ export function eval_function_declaration(declaration: FunctionDeclaration, env:
 
 export function eval_if_statement(declaration: IfStatement, env: Environment): RuntimeVal {
     const test = evaluate(declaration.test, env);
-
     if ((test as BooleanVal).value === true) {
         return eval_body(declaration.body, env);
     } else if (declaration.alternate) {
@@ -45,7 +45,7 @@ export function eval_if_statement(declaration: IfStatement, env: Environment): R
     }
 }
 
-function eval_body(body: Stmt[], env: Environment, newEnv: boolean = true): RuntimeVal {
+export function eval_body(body: Stmt[], env: Environment, newEnv: boolean = true): RuntimeVal {
     let scope: Environment;
 
     if (newEnv) {
@@ -94,7 +94,9 @@ export function eval_try_catch_statement(env: Environment, declaration?: TryCatc
     try {
         return eval_body(declaration.body, try_env, false);
     } catch (e) {
-        env.assignVar('error', e)
-        return eval_body(declaration.alternate, catch_env, false);
+        if (!(e instanceof ReturnError)) {
+            env.assignVar('error', e)
+            return eval_body(declaration.alternate, catch_env, false);
+        }
     }
 }

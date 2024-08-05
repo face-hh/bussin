@@ -17,6 +17,7 @@ export enum TokenType {
     If,
     Else,
     For,
+    Return,
 
     // Grouping * Operators
     BinaryOperator,
@@ -56,6 +57,7 @@ const KEYWORDS: Record<string, TokenType> = {
     if: TokenType.If,
     else: TokenType.Else,
     for: TokenType.For,
+    return: TokenType.Return
 };
 
 /**
@@ -109,7 +111,7 @@ export interface Token {
 
 // Returns a token of a given type and value
 function token(value: string = "", type: TokenType, raw: string = value): Token {
-    return { value, type, raw, toString: () => {return {value, type: reverseTokenType[type]}} };
+    return { value, type, raw, toString: () => { return { value, type: reverseTokenType[type] } } };
 }
 
 /**
@@ -141,16 +143,16 @@ function isint(str: string) {
 function getPrevIdents(tokens: Array<Token>): Token[] {
     const reversed = [...tokens].reverse();
     const newTokens: Token[] = [];
-    for(const token of reversed) {
-        if(token.type == TokenType.Identifier ||
+    for (const token of reversed) {
+        if (token.type == TokenType.Identifier ||
             token.type == TokenType.Dot ||
             token.type == TokenType.OpenBracket ||
             token.type == TokenType.CloseBracket ||
             (tokens[tokens.length - newTokens.length - 2] && tokens[tokens.length - newTokens.length - 2].type == TokenType.OpenBracket && token.type == TokenType.Number)) {
-                newTokens.push(token);
-            } else {
-                break;
-            }
+            newTokens.push(token);
+        } else {
+            break;
+        }
     }
     return newTokens.length > 0 ? newTokens.reverse() : null;
 }
@@ -176,7 +178,7 @@ export function tokenize(sourceCode: string): Token[] {
             let num = src.shift();
             let period = false;
             while (src.length > 0) {
-                if(src[0] == "." && !period) {
+                if (src[0] == "." && !period) {
                     period = true;
                     num += src.shift()!;
                 } else if (isint(src[0])) {
@@ -188,7 +190,7 @@ export function tokenize(sourceCode: string): Token[] {
             tokens.push(token(num, TokenType.Number));
         } else {
 
-            switch(char) {
+            switch (char) {
                 case "=":
                     src.shift()
                     if (src[0] == '=') {
@@ -220,22 +222,22 @@ export function tokenize(sourceCode: string): Token[] {
                     let str = "";
                     let raw = "";
                     src.shift();
-        
+
                     let escaped = false;
                     while (src.length > 0) {
                         const key = src.shift();
                         raw += key;
-                        if(key == "\\") {
+                        if (key == "\\") {
                             escaped = !escaped;
-                            if(escaped)continue;
+                            if (escaped) continue;
                         } else if (key == '"') {
-                            if(!escaped) {
+                            if (!escaped) {
                                 break;
                             }
                             escaped = false;
                         } else if (escaped) {
                             escaped = false;
-                            if(ESCAPED[key]) {
+                            if (ESCAPED[key]) {
                                 str += ESCAPED[key];
                                 continue;
                             } else {
@@ -244,20 +246,20 @@ export function tokenize(sourceCode: string): Token[] {
                         }
                         str += key;
                     }
-        
+
                     // append new string token.
                     tokens.push(token(str, TokenType.String, raw.substring(0, raw.length - 1)));
                     break;
                 }
                 case "-":
-                    if(src[1] == ">") {
+                    if (src[1] == ">") {
                         src.shift();
                         src.shift();
                         tokens.push(token("->", TokenType.Ternary));
                         break;
                     } else if (src[1] != src[0]) {
                         const previdents = getPrevIdents(tokens);
-                        if(previdents == null && tokens[tokens.length - 1].type != TokenType.CloseParen) {
+                        if (previdents == null && tokens[tokens.length - 1].type != TokenType.CloseParen) {
                             tokens.push(token("0", TokenType.Number));
                             tokens.push(token(src.shift(), TokenType.BinaryOperator));
                             break;
@@ -265,9 +267,9 @@ export function tokenize(sourceCode: string): Token[] {
                     }
                 // eslint-disable-next-line no-fallthrough
                 case "+":
-                    if(src[1] == src[0]) {
+                    if (src[1] == src[0]) {
                         const prevtokens = getPrevIdents(tokens);
-                        if(prevtokens != null) {
+                        if (prevtokens != null) {
                             tokens.push(token("=", TokenType.Equals));
                             prevtokens.forEach(token => tokens.push(token));
                             tokens.push(token(src.shift(), TokenType.BinaryOperator));
@@ -281,7 +283,7 @@ export function tokenize(sourceCode: string): Token[] {
                 case "/":
                     if (src[1] == "=") {
                         const prevtokens = getPrevIdents(tokens);
-                        if(prevtokens == null) break;
+                        if (prevtokens == null) break;
 
                         tokens.push(token("=", TokenType.Equals));
                         prevtokens.forEach(token => tokens.push(token));
@@ -289,12 +291,12 @@ export function tokenize(sourceCode: string): Token[] {
                         src.shift();
                         break;
                     } else if (src[0] == "/") {
-                        if(src[1] == "*") {
+                        if (src[1] == "*") {
                             let lastVal = "";
-                            while(src.length > 0) {
+                            while (src.length > 0) {
                                 const nextVal = src.shift();
 
-                                if(lastVal == "*" && nextVal == "/") {
+                                if (lastVal == "*" && nextVal == "/") {
                                     break;
                                 }
 
@@ -312,16 +314,16 @@ export function tokenize(sourceCode: string): Token[] {
                 // eslint-disable-next-line no-fallthrough
                 default:
 
-                    if(tokenType) {
+                    if (tokenType) {
                         tokens.push(token(src.shift(), tokenType));
                     } else if (isalpha(char, true)) {
                         let ident = "";
                         ident += src.shift();  // Add first character which is alphabetic or underscore
-                    
+
                         while (src.length > 0 && isalpha(src[0])) {
                             ident += src.shift();  // Subsequent characters can be alphanumeric or underscore
                         }
-                        
+
                         // CHECK FOR RESERVED KEYWORDS
                         const reserved = KEYWORDS[ident];
                         // If value is not undefined then the identifier is

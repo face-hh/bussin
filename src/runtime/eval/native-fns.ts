@@ -43,9 +43,9 @@ export function runtimeToJS(arg: RuntimeVal) {
 }
 
 export function jsToRuntime(val: unknown): RuntimeVal {
-    if(val == null) return MK_NULL();
+    if (val == null) return MK_NULL();
 
-    switch(typeof val) {
+    switch (typeof val) {
         case "boolean":
             return MK_BOOL(val);
         case "bigint":
@@ -54,7 +54,7 @@ export function jsToRuntime(val: unknown): RuntimeVal {
         case "string":
             return MK_STRING(val);
         case "object": {
-            if(Array.isArray(val)) {
+            if (Array.isArray(val)) {
                 const arr: RuntimeVal[] = [];
                 val.forEach(value => {
                     arr.push(jsToRuntime(value));

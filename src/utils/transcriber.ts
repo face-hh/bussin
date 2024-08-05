@@ -15,7 +15,7 @@ interface Currency {
 // @ts-expect-error It will assign replace_fr on string. It doesn't matter if it doesn't exist already.
 String.prototype.replace_fr = function (target: string, replacement: string): string {
     const pattern = new RegExp(`\\b${target}\\b(?=(?:(?:[^"]*"){2})*[^"]*$)`, 'g');
-    
+
     return this.replace(pattern, replacement);
 }
 
@@ -34,7 +34,7 @@ const rightsideCurrencies = [
     "₽", // Russian Ruble
     "₺", // Turkish Lira
     "₴" // Ukrainian Hryvnia
-];   
+];
 
 // @ts-expect-error It will assign replace_fr on string. It doesn't matter if it doesn't exist already.
 String.prototype.replace_currency = function (currency: string): string {
@@ -100,6 +100,7 @@ export function transcribe(code: string, currency: string) {
         .replace_fr("bedivided", "/=")
         .replace_fr("then", "->")
         .replace_fr("ornot", "|")
+        .replace_fr("ghost", "return")
         .replace(/: number/g, '')
         .replace(/: string/g, '')
         .replace(/: object/g, '')

@@ -1,7 +1,15 @@
 import { Stmt } from "../frontend/ast";
 import Environment from "./environment";
 
-export type ValueType = "null" | "number" | "boolean" | "object" | "native-fn" | "fn" | "string" | "array";
+export type ValueType =
+    | "null"
+    | "number"
+    | "boolean"
+    | "object"
+    | "native-fn"
+    | "fn"
+    | "string"
+    | "array";
 
 export interface RuntimeVal {
     type: ValueType;
@@ -36,7 +44,6 @@ export interface ArrayVal extends RuntimeVal {
     type: "array";
     values: RuntimeVal[];
 }
-
 
 export interface FunctionValue extends RuntimeVal {
     type: "fn";

@@ -15,7 +15,7 @@ args.shift();
 args.shift();
 const file = args.shift();
 
-if(file) {
+if (file) {
     run(file);
 } else {
     repl();
@@ -24,7 +24,7 @@ if(file) {
 async function run(filename: string) {
 
     let input = readFileSync(filename, 'utf-8') + "\nfinishExit()";
-    
+
     let currency = "-";
     if (filename.endsWith('.bsx')) {
         const currencies = JSON.parse(readFileSync(__dirname + "/../src/utils/currencies.json", "utf-8")); // should work for /src/ and /dist/
@@ -33,10 +33,9 @@ async function run(filename: string) {
     }
 
     const parser = new Parser();
-    const env = createGlobalEnv(args.includes("--time") ? begin : -1, filename.substring(0, filename.lastIndexOf("/") + 1), args.map(value => MK_STRING(value)), currency);
+    const env = createGlobalEnv(args.includes("--time") ? begin : -1, filename.substring(0, filename.lastIndexOf("/") + 1), args.map(value => MK_STRING(value)), currency, args.includes("--return"));
 
     const program = parser.produceAST(input);
-    
     evaluate(program, env);
 }
 
@@ -54,7 +53,7 @@ async function repl() {
     console.log("Repl v1.0 (Bussin)");
 
     // eslint-disable-next-line no-constant-condition
-    while(true) {
+    while (true) {
         const input = await rl.question("> ");
 
         const program = parser.produceAST(input);
@@ -62,7 +61,7 @@ async function repl() {
         try {
             const result = runtimeToJS(evaluate(program, env));
             console.log(result);
-        } catch(err) {
+        } catch (err) {
             console.log(err);
         }
     }

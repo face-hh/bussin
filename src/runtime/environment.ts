@@ -17,8 +17,9 @@ import { evaluate } from './interpreter';
 import { transcribe } from '../utils/transcriber';
 import axios from 'axios';
 
-export function createGlobalEnv(beginTime: number = -1, filePath: string = __dirname, args: RuntimeVal[] = [], currency: string = "-"): Environment {
+export function createGlobalEnv(beginTime: number = -1, filePath: string = __dirname, args: RuntimeVal[] = [], currency: string = "-", enableReturn: boolean = false): Environment {
     const env = new Environment();
+    env.enableReturn = enableReturn;
 
     env.declareVar("true", MK_BOOL(true), true);
     env.declareVar("false", MK_BOOL(false), true);
@@ -161,12 +162,12 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
 
     function lowerWaitDepth() {
         waitDepth--;
-        if(waitDepth <= 0 && shouldExit) {
+        if (waitDepth <= 0 && shouldExit) {
             closeBussin();
         }
     }
 
-    const timeoutIds: {[key: number]: NodeJS.Timeout} = {};
+    const timeoutIds: { [key: number]: NodeJS.Timeout } = {};
 
     function generateTimeoutId(tm: NodeJS.Timeout): number {
         let id: number;
@@ -176,7 +177,7 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
         timeoutIds[id] = tm;
         return id;
     }
-    
+
     env.declareVar("setTimeout", MK_NATIVE_FN((args) => {
         const func = args.shift() as FunctionValue;
         const time = args.shift() as NumberVal;
@@ -205,7 +206,7 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
 
     env.declareVar("clearTimeout", MK_NATIVE_FN((args) => {
         const id = args.shift() as NumberVal;
-        if(timeoutIds[id.value]) {
+        if (timeoutIds[id.value]) {
             clearTimeout(timeoutIds[id.value]);
             lowerWaitDepth();
             return MK_BOOL();
@@ -214,7 +215,7 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
     }), true);
     env.declareVar("clearInterval", MK_NATIVE_FN((args) => {
         const id = args.shift() as NumberVal;
-        if(timeoutIds[id.value]) {
+        if (timeoutIds[id.value]) {
             clearInterval(timeoutIds[id.value]);
             lowerWaitDepth();
             return MK_BOOL();
@@ -269,17 +270,17 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
     env.declareVar("fetch", MK_NATIVE_FN((args) => {
         const url = (args.shift() as StringVal).value;
         const options = args.shift() as ObjectVal;
-    
+
         const method = options == undefined ? "GET" : (options.properties.get("method") as StringVal)?.value ?? "GET";
         const body = options == undefined ? null : (options.properties.get("body") as StringVal)?.value ?? null;
         const content_type = options == undefined ? "text/plain" : (options.properties.get("content_type") as StringVal)?.value ?? "text/plain";
-        
+
         return MK_NATIVE_FN((args) => {
             const fn = args.shift() as FunctionValue;
             waitDepth++;
             const now = Date.now();
             (async () => {
-                const req = await axios.request({url, method, headers: { "content-type": content_type }, data: body });
+                const req = await axios.request({ url, method, headers: { "content-type": content_type }, data: body });
                 if (req.status !== 200) {
                     throw new Error("Failed to fetch data: " + req.data.toString('utf8'));
                 }
@@ -292,7 +293,7 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
     }), true);
 
     function localPath(path: string) {
-        if(path.startsWith(".") || !path.includes(":")) {
+        if (path.startsWith(".") || !path.includes(":")) {
             path = filePath + path;
         }
         return path;
@@ -365,7 +366,7 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
 
     env.declareVar("len", MK_NATIVE_FN((args) => {
         const arg = args.shift();
-        switch(arg.type) {
+        switch (arg.type) {
             case "string":
                 return MK_NUMBER((arg as StringVal).value.length);
             case "object":
@@ -393,13 +394,13 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
         const path = localPath((args.shift() as StringVal).value);
 
         let input;
-        if(path.endsWith(".bs")) {
+        if (path.endsWith(".bs")) {
             input = fs.readFileSync(path, "utf-8");
         } else if (path.endsWith(".bsx")) {
-            if(currency == "-") throw "Cannot run Bussin X from Bussin: " + path;
+            if (currency == "-") throw "Cannot run Bussin X from Bussin: " + path;
             input = transcribe(fs.readFileSync(path, "utf-8"), currency);
         } else throw "Not a Bussin [X] file: " + path
-        
+
         const parser = new Parser();
         const program = parser.produceAST(input);
 
@@ -410,7 +411,7 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
     env.declareVar("bson", MK_OBJECT(
         new Map()
             .set("stringify", MK_NATIVE_FN((args) => {
-                if(args[0].type == "object") {
+                if (args[0].type == "object") {
                     const obj = args.shift() as ObjectVal;
                     return MK_STRING(JSON.stringify(runtimeToJS(obj)));
                 } else if (args[0].type == "array") {
@@ -421,8 +422,8 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
             }))
             .set("parse", MK_NATIVE_FN((args) => {
                 const string = (args.shift() as StringVal).value;
-                const jsonObj: {[key: string]: unknown} = JSON.parse(string);
-                if(Array.isArray(jsonObj)) {
+                const jsonObj: { [key: string]: unknown } = JSON.parse(string);
+                if (Array.isArray(jsonObj)) {
                     const rtArr: RuntimeVal[] = [];
                     jsonObj.forEach(val => rtArr.push(jsToRuntime(val)))
                     return MK_ARRAY(rtArr);
@@ -435,7 +436,7 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
 
     function parseRegex(regex: string): RegExp {
         const split = regex.split("/");
-        if(split.length < 3) throw "Invalid regex: " + regex;
+        if (split.length < 3) throw "Invalid regex: " + regex;
 
         split.shift(); // remove empty
 
@@ -463,13 +464,13 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
 
                 const replaceValue = (args.shift() as StringVal).value;
                 const replaced = string.replace(regex, replaceValue);
-                
+
                 return MK_STRING(replaced);
             }))
     ), true);
 
     function closeBussin(): null {
-        if(beginTime != -1) {
+        if (beginTime != -1) {
             console.log(`\nBussin executed in ${(Date.now() - beginTime).toLocaleString()}ms${slept > 0 ? ` (${slept.toLocaleString()}ms slept)` : ""}${net > 0 ? ` (${net.toLocaleString()}ms networking)` : ""}.`);
         }
         process.exit();
@@ -478,7 +479,7 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
     env.declareVar("exit", MK_NATIVE_FN(() => closeBussin()), true);
 
     env.declareVar("finishExit", MK_NATIVE_FN(() => {
-        if(waitDepth == 0) {
+        if (waitDepth == 0) {
             closeBussin();
         } else {
             shouldExit = true;
@@ -493,13 +494,17 @@ export default class Environment {
     private parent?: Environment;
     private variables: Map<string, RuntimeVal>
     private constants: Set<string>;
+    canHaveReturn: boolean = false;
+    enableReturn: boolean = false;
 
-    constructor(parentENV?: Environment) {
+    constructor (parentENV?: Environment) {
         //const global = parentENV ? true : false;
 
         this.parent = parentENV;
         this.variables = new Map();
         this.constants = new Set();
+        if (parentENV?.enableReturn) this.enableReturn = true;
+        if (parentENV?.canHaveReturn) this.canHaveReturn = true;
     }
 
     public declareVar(varname: string, value: RuntimeVal, constant: boolean): RuntimeVal {
@@ -536,12 +541,10 @@ export default class Environment {
             pastVal = this.lookupOrMutObject(expr.object as MemberExpr, null, (expr.object as MemberExpr).property as Identifier);
         } else {
             const varname = (expr.object as Identifier).symbol;
-            const env = this.resolve(varname);
-
-            pastVal = env.variables.get(varname);
+            pastVal = this.lookupVar(varname);
         }
 
-        switch(pastVal.type) {
+        switch (pastVal.type) {
             case "object": {
                 const currentProp = (expr.property as Identifier).symbol;
                 const prop = property ? property.symbol : currentProp;
@@ -549,7 +552,6 @@ export default class Environment {
                 if (value) (pastVal as ObjectVal).properties.set(prop, value);
 
                 if (currentProp) pastVal = ((pastVal as ObjectVal).properties.get(currentProp) as ObjectVal);
-
                 return pastVal;
             }
             case "array": {
@@ -557,11 +559,11 @@ export default class Environment {
                 // Will evaluate the expression. Numbers will stay, but a variable will work. This allows for array[0] and array[ident].
                 const numRT: RuntimeVal = evaluate(expr.property, this);
 
-                if(numRT.type != "number") throw "Arrays do not have keys: " + expr.property;
+                if (numRT.type != "number") throw "Arrays do not have keys: " + expr.property;
 
                 const num = (numRT as NumberVal).value;
 
-                if(value) (pastVal as ArrayVal).values[num] = value;
+                if (value) (pastVal as ArrayVal).values[num] = value;
 
                 return (pastVal as ArrayVal).values[num];
             }

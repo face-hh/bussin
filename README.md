@@ -5,6 +5,7 @@ An esoteric programming language, in TypeScript for heaven's sake.
 # Running
 - To run a specific file: `npm run bussin <FILENAME>`
 - To run in repl mode (Bussin only): `npm run bussin`
+- Adding options requires adding `--` before the option: `npm run bussin -- --time --return`
 
 # Bussin
 You can find an example at `/examples/main.bs`
@@ -21,6 +22,7 @@ Inside **Bussin X**, you *can* use BS syntax, however, it's recommended to use t
 - Math number stuff. `math.e`, `parseNumber("5")`
 - More string functions. `trim("  Hello  ")`, `splitstr("Hello,There", ",")`
 - Comments. `lit x be 5 + 10 rn /* this code is bussin */`
+- Optionally, you can now use the redundant return statement in functions only by enabling the `--return` flag while using Bussin. `ghost "AAAAAAAAAAAa";`
 
 ## Variables
 Mutable variables are created with:
@@ -135,6 +137,13 @@ We, at Bussin X, think `return` statements are redundant. Instead, our superior 
 bruh perform(x, y) {
     x plus y // will do nothing
     x minus y
+}
+```
+For those stubborn souls who want to use the silly statement, pass in the `--return` flag. Then you can do some more extra work.
+```rs
+bruh perform(x, y) {
+	x plus y // will do nothing
+	ghost x minus y // if no ghost then also nothing
 }
 ```
 You can also run the function after a specified timespan:

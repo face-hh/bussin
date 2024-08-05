@@ -1,4 +1,4 @@
-import { Stmt, Program, Expr, BinaryExpr, NumericLiteral, Identifier, VarDeclaration, AssignmentExpr, Property, ObjectLiteral, CallExpr, MemberExpr, FunctionDeclaration, StringLiteral, IfStatement, ForStatement, TryCatchStatement, ArrayLiteral } from "./ast";
+import { Stmt, Program, Expr, BinaryExpr, NumericLiteral, Identifier, VarDeclaration, AssignmentExpr, Property, ObjectLiteral, CallExpr, MemberExpr, FunctionDeclaration, StringLiteral, IfStatement, ForStatement, TryCatchStatement, ArrayLiteral, ReturnStatement, BlockStatement } from "./ast";
 import { tokenize, Token, TokenType } from "./lexer";
 
 export default class Parser {
@@ -14,14 +14,14 @@ export default class Parser {
 
     private shift(): Token {
         const token = this.tokens.shift();
-        switch(token.type) {
+        switch (token.type) {
             case TokenType.NewLine:
                 this.lineCounter++;
                 break;
             case TokenType.String: {
                 const split = token.raw.split("\n");
                 this.lineCounter += split.length - 1;
-                if(split.length > 1) {
+                if (split.length > 1) {
                     this.column = split[split.length - 1].length + 1; // +1 for quote
                 }
             }
@@ -29,7 +29,7 @@ export default class Parser {
             default:
                 this.lastNonNLLine = this.nonNLLine;
                 this.nonNLLine = this.lineCounter;
-                if(token.type != TokenType.String && (token.type != TokenType.Identifier || token.value != "finishExit")) {
+                if (token.type != TokenType.String && (token.type != TokenType.Identifier || token.value != "finishExit")) {
                     this.lastNonNLLine = this.nonNLLine;
                     this.nonNLLine = this.lineCounter;
                     this.column += token.value.length;
@@ -45,7 +45,7 @@ export default class Parser {
 
     private at(): Token {
         let token = this.tokens[0] as Token;
-        while(token.type == TokenType.NewLine) {
+        while (token.type == TokenType.NewLine) {
             this.shift();
             token = this.tokens[0] as Token;
         }
@@ -101,6 +101,13 @@ export default class Parser {
                 return this.parse_if_statement();
             case TokenType.For:
                 return this.parse_for_statement();
+            case TokenType.Return:
+                return this.parse_return_statement();
+            case TokenType.OpenBrace:
+                return {
+                    kind: 'BlockStatement',
+                    body: this.parse_block_statement()
+                } as BlockStatement;
             case TokenType.NewLine:
                 this.at(); // will remove all new lines
                 return this.parse_stmt();
@@ -176,6 +183,25 @@ export default class Parser {
         } as IfStatement;
     }
 
+    parse_return_statement(): Stmt {
+        this.eat();
+        let expr: Expr = null;
+        if (this.at().type !== TokenType.Semicolon) {
+            expr = this.parse_expr();
+        }
+        this.expect(TokenType.Semicolon, "Semicolon (\";\") expected following \"return\" statement.");
+        if (expr) {
+            return {
+                kind: "ReturnStatement",
+                expr
+            } as ReturnStatement
+        } else {
+            return {
+                kind: "ReturnStatement"
+            } as ReturnStatement
+        }
+    }
+
     parse_function_declaration(): Stmt {
         this.eat(); // eat fn keyword
         const name = this.at().type == TokenType.Identifier ? this.eat().value : "<anonymous>";
@@ -228,20 +254,20 @@ export default class Parser {
         const data = this.parse_assignment_expr();
 
         // before returning, if it's a ternary we don't want to return the direct value.
-        if(this.at().type == TokenType.Ternary) {
-            if(data.kind != "BinaryExpr" && data.kind != "Identifier") {
+        if (this.at().type == TokenType.Ternary) {
+            if (data.kind != "BinaryExpr" && data.kind != "Identifier") {
                 throw new Error("Expected BinaryExpr or Identifier following ternary expression.");
             }
             this.eat();
 
             const expr = this.parse_expr();
 
-            if(expr.kind != "BinaryExpr" || (expr as BinaryExpr).operator != "|") {
+            if (expr.kind != "BinaryExpr" || (expr as BinaryExpr).operator != "|") {
                 throw new Error("Bar (\"|\") expected following left side of ternary operator (\"->\").");
             }
-            
+
             const ifStmt = { kind: "IfStatement", test: data, body: [(expr as BinaryExpr).left], alternate: [(expr as BinaryExpr).right] } as IfStatement;
-            return {kind:"CallExpr",args:[],caller:{kind:"FunctionDeclaration",parameters:[],name:"<anonymous>",body:[ifStmt]} as FunctionDeclaration} as CallExpr;
+            return { kind: "CallExpr", args: [], caller: { kind: "FunctionDeclaration", parameters: [], name: "<anonymous>", body: [ifStmt] } as FunctionDeclaration } as CallExpr;
         }
 
         return data;
@@ -271,7 +297,7 @@ export default class Parser {
                 kind: "BinaryExpr",
                 left, right, operator
             } as BinaryExpr;
-            while(this.at().type == TokenType.And || this.at().type == TokenType.Bar) {
+            while (this.at().type == TokenType.And || this.at().type == TokenType.Bar) {
                 left = {
                     kind: "BinaryExpr",
                     left,
@@ -316,7 +342,7 @@ export default class Parser {
 
         while (this.not_eof() && this.at().type != TokenType.CloseBrace) {
             // { key: val, key2: val }
-            if(this.at().type != TokenType.Identifier && this.at().type != TokenType.String) {
+            if (this.at().type != TokenType.Identifier && this.at().type != TokenType.String) {
                 throw new Error("Identifier expected following \"Object\" expression.");
             }
             const key = this.eat().value;
@@ -348,7 +374,7 @@ export default class Parser {
     }
 
     private parse_array_expr(): Expr {
-        if(this.at().type !== TokenType.OpenBracket) {
+        if (this.at().type !== TokenType.OpenBracket) {
             return this.parse_try_catch_expr();
         }
 

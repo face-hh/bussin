@@ -75,3 +75,10 @@ for(let i = 0; run == true; i++){
 setTimeout(fn timeout() {
     println("This took a few seconds didn't it.")
 }, 3000)
+
+fn e(m) {
+	if (true) {
+		return m;
+	}
+}
+println(e(24324))
