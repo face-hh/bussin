@@ -1,0 +1,18 @@
+class Apple {
+    static class_name = "Apple";
+    percent;
+
+    constructor() {
+        this.percent = 100;
+    }
+
+    eat() {
+        this.percent -= 1;
+    }
+}
+
+println(Apple.class_name);
+
+let myApple = new Apple();
+myApple.eat();
+println(myApple.percent);

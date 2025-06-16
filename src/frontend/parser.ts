@@ -1,10 +1,10 @@
-import { Stmt, Program, Expr, BinaryExpr, NumericLiteral, Identifier, VarDeclaration, AssignmentExpr, Property, ObjectLiteral, CallExpr, MemberExpr, FunctionDeclaration, StringLiteral, IfStatement, ForStatement, TryCatchStatement, ArrayLiteral } from "./ast";
+import { Stmt, Program, Expr, BinaryExpr, NumericLiteral, Identifier, VarDeclaration, AssignmentExpr, Property, ObjectLiteral, CallExpr, MemberExpr, FunctionDeclaration, StringLiteral, IfStatement, ForStatement, TryCatchStatement, ArrayLiteral, ClassDeclarationStmt, ReturnStmt, NewExpr, WhileStmt, EnumDeclarationStmt, MatchExpr, ThrowStmt, BreakStmt, ContinueStmt } from "./ast";
 import { tokenize, Token, TokenType } from "./lexer";
 
 export default class Parser {
     private tokens: Token[] = [];
 
-    // fuck you it works
+    // This may look unnecessary, but it does, fortunately, work!
     private lineCounter: number = 1;
     private column: number = 0;
     private nonNLLine: number = 0;
@@ -69,7 +69,7 @@ export default class Parser {
         const prev = this.eat();
 
         if (!prev || prev.type != type) {
-            console.error(`Parser error: (Ln ${this.lastNonNLLine}, Col ${this.lastNonNLColumn + 1})\n`, err, "Expecting:", type);
+            console.error(`Parser error: (Ln ${this.lastNonNLLine}, Col ${this.lastNonNLColumn + 1})\n`, err, "Expecting:", TokenType[type], 'Got:', TokenType[prev.type]);
             process.exit(1)
         }
 
@@ -95,8 +95,20 @@ export default class Parser {
             case TokenType.Let:
             case TokenType.Const:
                 return this.parse_var_declaration();
-            case TokenType.Fn:
-                return this.parse_function_declaration();
+            case TokenType.Fn: {
+                this.eat(); // eat fn keyword
+                const name = this.expect(TokenType.Identifier, "Expected an Identifier for the function name in a function declaration.").value;
+                return this.parse_function_declaration(name);
+            }
+            case TokenType.Throw: {
+                this.eat();
+                const value = this.parse_expr();
+                if (this.at().type === TokenType.Semicolon) this.eat();
+                return {
+                    kind: "ThrowStatement",
+                    value,
+                } as ThrowStmt;
+            }
             case TokenType.If:
                 return this.parse_if_statement();
             case TokenType.For:
@@ -104,11 +116,56 @@ export default class Parser {
             case TokenType.NewLine:
                 this.at(); // will remove all new lines
                 return this.parse_stmt();
+            case TokenType.Class:
+                return this.parse_class_declaration();
+            case TokenType.Return:
+                return this.parse_return_statement();
+            case TokenType.Enum:
+                return this.parse_enum_declaration();
+            case TokenType.While:
+                return this.parse_while_statement();
+            case TokenType.Break:
+                this.eat();
+                return {kind: "BreakStatement"} as BreakStmt;
+            case TokenType.Continue:
+                this.eat();
+                return {kind: "ContinueStatement"} as ContinueStmt;
             default:
                 return this.parse_expr();
         }
     }
 
+    parse_enum_declaration(): EnumDeclarationStmt {
+        this.eat();
+        const name = this.expect(TokenType.Identifier, `Expected an identifier following the "enum" keyword.`).value;
+        this.expect(TokenType.OpenBrace, `Left brace ("{") expected following the enum declaration's name.`);
+        const members = new Array<string>();
+        while (this.at().type != TokenType.CloseBrace) {
+            members.push(this.expect(TokenType.Identifier, `Identifier expected for enum name.`).value);
+            if (this.at().type != TokenType.CloseBrace) {
+                this.expect(TokenType.Comma, `Comma expected following enum member.`);
+            }
+        }
+        this.expect(TokenType.CloseBrace, `Right brace ("}") expected following enum declaration body.`);
+        return {
+            kind: "EnumDeclaration",
+            members,
+            name,
+        } as EnumDeclarationStmt;
+    }
+
+    parse_while_statement(): WhileStmt {
+        this.eat();
+        this.expect(TokenType.OpenParen, `Opening parenthesis ("(") expected after "while" keyword.`);
+        const value = this.parse_expr();
+        this.expect(TokenType.CloseParen, `Closing parenthesis (")") expected after while expression.`);
+        return {
+            kind: "WhileStatement",
+            body: this.parse_block_statement(),
+            value,
+        } as WhileStmt;
+    }
+    
     parse_block_statement(): Stmt[] {
         this.expect(TokenType.OpenBrace, "Opening brace (\"{\") expected while parsing code block.");
 
@@ -124,13 +181,100 @@ export default class Parser {
         return body;
     }
 
+    parse_return_statement(): ReturnStmt {
+        this.eat();
+        let value;
+        if (this.at().type != TokenType.Semicolon) {
+            value = this.parse_expr();
+            if (this.at().type == TokenType.Semicolon) {
+                this.eat();
+            }
+        } else {
+            this.eat();
+            value = { kind: "Identifier", symbol: "null" } as Identifier;
+        }
+        
+        const r: ReturnStmt = {
+            kind: "ReturnStatement",
+            value,
+        };
+        return r;
+    }
+
+    /*
+    Class syntax:
+    class Foo {
+        field_name;
+        static static_field_name = static_field_value;
+
+        fun_name(...args) {
+
+        }
+
+        static static_fun_name() {
+            this.static_field_name = 'foo'
+        }
+    }
+
+    ? We could potentially addd support for public/private fields and functions, but who really needs them?
+    */
+    parse_class_declaration(): ClassDeclarationStmt {
+        this.eat();
+        const name = this.expect(TokenType.Identifier, `Expected an Identifier following the "class" keyword.`).value;
+        this.expect(TokenType.OpenBrace, `Opening brace ("{") expected following class name.`);
+        
+        const fields = new Set<string>();
+        const staticFields = new Map<string, Expr>();
+        const funs = new Map<string, FunctionDeclaration>();
+        const staticFuns = new Map<string, FunctionDeclaration>();
+
+        while (this.not_eof() && this.at().type !== TokenType.CloseBrace) {
+            let is_static = false;
+            if (this.at().type == TokenType.Static) {
+                this.eat();
+                is_static = true;
+            }
+
+            const name = this.expect(TokenType.Identifier, `Identifier expected to start a class field/function.`).value;
+            if (this.at().type == TokenType.OpenParen) {
+                if (is_static) {
+                    staticFuns.set(name, this.parse_function_declaration(name));
+                } else {
+                    funs.set(name, this.parse_function_declaration(name));
+                }
+            } else {
+                if (is_static) {
+                    this.expect(TokenType.Equals, `Expected equals ("=") following static field declaration to show the initial value of the static field.`);
+                    staticFields.set(name, this.parse_expr());
+                } else {
+                    fields.add(name);
+                }
+            }
+
+            if (this.at().type == TokenType.Semicolon) {
+                this.eat();
+            }
+        }
+
+        this.expect(TokenType.CloseBrace, `Closing brace ("}") expected following class body.`);
+        const c = {
+            kind: "ClassDeclaration",
+            fields,
+            staticFields,
+            funs,
+            staticFuns,
+            name,
+        } as ClassDeclarationStmt;
+        return c;
+    }
+
     parse_for_statement(): Stmt {
         this.eat(); // eat "for" keyword
         this.expect(TokenType.OpenParen, "Opening parenthesis (\"(\") expected following \"for\" statement.");
         const init = this.parse_var_declaration();
         const test = this.parse_expr();
 
-        this.expect(TokenType.Semicolon, "Semicolon (\";\") expected following \"test expression\" in \"for\" statement.");
+        //this.expect(TokenType.Semicolon, "Semicolon (\";\") expected following \"test expression\" in \"for\" statement.");
 
         const update = this.parse_expr();
 
@@ -176,10 +320,7 @@ export default class Parser {
         } as IfStatement;
     }
 
-    parse_function_declaration(): Stmt {
-        this.eat(); // eat fn keyword
-        const name = this.at().type == TokenType.Identifier ? this.eat().value : "<anonymous>";
-
+    parse_function_declaration(name: string): FunctionDeclaration {
         const args = this.parse_args();
         const params: string[] = [];
 
@@ -219,13 +360,13 @@ export default class Parser {
 
         if (this.at().type == TokenType.String) this.eat(); // eaat the " at the end
 
-        this.expect(TokenType.Semicolon, "Semicolon (\";\") expected at the end of \"let\"/\"const\" statement.");
+        //this.expect(TokenType.Semicolon, "Semicolon (\";\") expected at the end of \"let\"/\"const\" statement.");
 
         return declaration;
     }
 
     private parse_expr(): Expr {
-        const data = this.parse_assignment_expr();
+        const data = this.parse_new_expr();
 
         // before returning, if it's a ternary we don't want to return the direct value.
         if(this.at().type == TokenType.Ternary) {
@@ -244,7 +385,34 @@ export default class Parser {
             return {kind:"CallExpr",args:[],caller:{kind:"FunctionDeclaration",parameters:[],name:"<anonymous>",body:[ifStmt]} as FunctionDeclaration} as CallExpr;
         }
 
+        if (this.at().type == TokenType.Semicolon) { // Support semicolons anywhere in expressions to allow for the destruction of ambiguous syntax if present
+            this.eat();
+        }
         return data;
+    }
+
+    private parse_new_expr(): Expr {
+        if (this.at().type != TokenType.New) {
+            return this.parse_assignment_expr();
+        }
+
+        this.eat();
+        const target = this.parse_member_expr(); //? We do this to only support identifiers and member expressions on calls, as any lower precedence would leave it to find a call expression
+        this.expect(TokenType.OpenParen, `Expected an open parenthesis ("(") following the "new" expression's name.`);
+        const args = new Array<Expr>();
+        while (this.at().type != TokenType.CloseParen) {
+            args.push(this.parse_expr());
+            if (this.at().type != TokenType.CloseParen) {
+                this.expect(TokenType.Comma, `Expected a comma (",") or closing parenthesis (")") following a "new" expression's argument.`);
+            }
+        }
+        this.expect(TokenType.CloseParen, `Expected a closing parenthesis (")") following the "new" expression's parameters.`);
+        
+        return {
+            kind: "NewExpr",
+            target,
+            args,
+        } as NewExpr;
     }
 
     private parse_assignment_expr(): Expr {
@@ -505,8 +673,11 @@ export default class Parser {
                     kind: "StringLiteral",
                     value: this.eat().value,
                 } as StringLiteral;
-            case TokenType.Fn:
-                return this.parse_function_declaration();
+            case TokenType.Fn: {
+                this.eat(); // eat fn keyword
+                const name = this.at().type == TokenType.Identifier ? this.eat().value : "<anonymous>";
+                return this.parse_function_declaration(name);
+            }
             case TokenType.OpenParen: {
                 this.eat(); // eat the opening paren
                 const value = this.parse_expr();
@@ -514,6 +685,53 @@ export default class Parser {
                 this.expect(TokenType.CloseParen, `Unexpected token (${JSON.stringify(this.at().toString())}) found while parsing arguments.`); // closing paren
 
                 return value;
+            }
+            case TokenType.Match: {
+                this.eat();
+                const value = this.parse_expr();
+                this.expect(TokenType.OpenBrace, `Expected an open brace ("{") to begin the match body.`);
+                let defaultCase: Stmt[]|undefined = undefined;
+                const cases = new Map<Expr[], Stmt[]>();
+
+                while (this.at().type != TokenType.CloseBrace) {
+                    const case_arr = [];
+                    let is_default = false;
+                    while (this.at().type != TokenType.Arrow && this.not_eof()) {
+                        if (this.at().type == TokenType.Default) {
+                            this.eat();
+                            is_default = true;
+                        } else {
+                            case_arr.push(this.parse_expr());
+                        }
+                        if (this.at().type != TokenType.Arrow) {
+                            this.expect(TokenType.Comma, `Expected a comma (",") to separate match cases that coerce to one body.`);
+                        }
+                    }
+                    this.expect(TokenType.Arrow, `Expected an arrow ("=>") following match cases to coerce into a body.`);
+                    const body = this.parse_block_statement();
+                    if (is_default) {
+                        if (defaultCase != undefined) {
+                            throw `Can only have one default case in a match body.`;
+                        }
+                        // To prevent adding unnecessary bloat to the interpreter for match expressions,
+                        // we separate the default case from other cases despite them being able to be packaged
+                        // together. 
+                        if (case_arr.length > 0) {
+                            cases.set(case_arr, body);
+                        }
+                        defaultCase = body;
+                    } else {
+                        cases.set(case_arr, body);
+                    }
+                }
+
+                this.expect(TokenType.CloseBrace, `Expected a closing brace ("}") to end the match body.`);
+                return {
+                    kind: "MatchExpr",
+                    cases,
+                    defaultCase,
+                    value,
+                } as MatchExpr;
             }
             default:
                 console.error("Unexpected token found during parsing!", this.at().toString());

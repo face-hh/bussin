@@ -1,0 +1,55 @@
+input("Number of generations:")(bruh(genCount) {
+input("Width:")(bruh(width) {
+
+genCount be parseNumber(genCount) rn
+width be parseNumber(width) rn
+
+lit current be [] rn
+yall (lit i be 0 rn i smol width rn i plusplus) {
+    sus (i fr ((width) minus (1))) {
+        push(current, 1)
+    } impostor {
+        push(current, 0)
+    }
+}
+
+bruh tostringGen(gen) {
+    lit buf be "" rn
+    yall (lit i be 0 rn i smol len(gen) rn i plusplus) {
+        sus (gen[i] fr 1) {
+            buf be strcon(buf, "■") rn
+        } impostor {
+            buf be strcon(buf, " ") rn
+        }
+    }
+    strcon(buf, "\n")
+}
+
+bruh nextGen(this) {
+    lit next be [0] rn
+    mf size be len(this) rn
+
+    lit state be nerd.bor(this[0], nerd.blsh(this[1], 1)) rn
+
+    yall (lit i be 0 rn i smol ((size) minus (2)) rn i plusplus) {
+        state be nerd.band(nerd.blsh(state, 1), 7) rn
+        state be nerd.bor(state, ((i plus 2) smol size) then (this[i plus 2]) ornot 0) rn
+        push(next, nerd.band(nerd.brsh(110, state), 1))
+    }
+
+    push(next, 0)
+    next
+}
+
+waffle(tostringGen(current))
+lit buf be "" rn
+yall (lit i be 0 rn i smol genCount rn i plusplus) {
+    current be nextGen(current) rn
+    buf be strcon(buf, tostringGen(current)) rn
+}
+
+waffle(buf)
+
+})
+})
+

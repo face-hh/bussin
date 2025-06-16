@@ -1,10 +1,58 @@
 import { Stmt } from "../frontend/ast";
 import Environment from "./environment";
 
-export type ValueType = "null" | "number" | "boolean" | "object" | "native-fn" | "fn" | "string" | "array";
+export type ValueType = 
+    "null" |
+    "number" |
+    "boolean" |
+    "object" |
+    "native-fn" |
+    "fn" |
+    "string" |
+    "array" |
+    "class" |
+    "static-class" | 
+    "class-function" |
+    "static-enum" |
+    "enum"
+;
 
 export interface RuntimeVal {
     type: ValueType;
+}
+
+export interface StaticEnumValue extends RuntimeVal {
+    type: "static-enum";
+    name: string;
+    members: string[];
+}
+
+export interface EnumValue extends RuntimeVal {
+    type: "enum";
+    name: string;
+    parent: StaticEnumValue;
+    tagged?: RuntimeVal;
+}
+
+export interface ClassFunctionValue extends FunctionValue {
+    type: "class-function";
+    parent: ClassValue|StaticClassValue;
+}
+
+export interface StaticClassValue extends RuntimeVal {
+    type: "static-class";
+    name: string;
+    fields: Set<string>;
+    staticFields: Map<string, RuntimeVal>;
+    funs: Map<string, ClassFunctionValue>;
+    staticFuns: Map<string, ClassFunctionValue>;
+}
+
+export interface ClassValue extends RuntimeVal {
+    type: "class";
+    parent: StaticClassValue;
+    fields: Map<string, RuntimeVal>;
+    funs: Map<string, ClassFunctionValue>;
 }
 
 export interface NullVal extends RuntimeVal {
@@ -39,7 +87,7 @@ export interface ArrayVal extends RuntimeVal {
 
 
 export interface FunctionValue extends RuntimeVal {
-    type: "fn";
+    type: "fn"|"class-function";
     name: string;
     parameters: string[];
     declarationEnv: Environment;

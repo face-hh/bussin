@@ -61,6 +61,20 @@ async function get_country() {
 export function transcribe(code: string, currency: string) {
     return code
         // @ts-expect-error replace_fr is assigned earlier in the code.
+        .replace_fr("chad", "class")
+        .replace_fr("drake", "this")
+        .replace_fr("ghost", "return")
+        .replace_fr("aura", "break")
+        .replace_fr("gyatt", "continue")
+        .replace_fr("diddy", "while")
+        .replace_fr("kai cenat", "static")
+        .replace_fr("skibidi toilet", "constructor")
+        .replace_fr("mog", "new")
+        .replace_fr("baller", "enum")
+        .replace_fr("fw", "match")
+        .replace_fr("edges", "=>")
+        .replace_fr("put the fries in the bag lil bro", "default")
+        .replace_fr("yeet", "throw")
         .replace_fr(";", '!')
         .replace_fr("rn", ';')
         .replace_fr("be", '=')
@@ -81,8 +95,10 @@ export function transcribe(code: string, currency: string) {
         .replace_fr("thicc", '>')
         .replace_fr("nocap", 'true')
         .replace_fr("cap", 'false')
-        .replace_fr("fuck_around", 'try')
-        .replace_fr("find_out", 'catch')
+        .replace_fr("fuck around", 'try')
+        .replace_fr("find out", 'catch')
+        .replace_fr("fuck_around", 'try') // These are still here to
+        .replace_fr("find_out", 'catch')  // preserve legacy code.
         .replace_fr("clapback", 'exec')
         .replace_fr("yap", 'input')
         .replace_fr("minus", "-")

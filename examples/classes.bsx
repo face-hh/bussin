@@ -1,0 +1,17 @@
+chad Apple {
+    kai cenat class_name be "Apple" rn
+    percent rn
+
+    skibidi toilet() {
+        drake.percent be 100 rn
+    }
+
+    eat() {
+        drake.percent beminus 1 rn
+    }
+}
+
+waffle(Apple.class_name)
+lit myApple be mog Apple() rn
+myApple.eat() rn
+waffle(myApple.percent) rn

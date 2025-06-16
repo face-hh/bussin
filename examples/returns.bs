@@ -1,0 +1,16 @@
+fn returns() {
+    fn returns2() {
+        if (true) {
+            return 2;
+        }
+        return 3;
+    }
+    let a = returns2();
+    try {
+        return a+2;
+    } catch {
+        return 0;
+    }
+}
+
+println(returns());

@@ -1,4 +1,4 @@
-import { RuntimeVal, StringVal, NumberVal, BooleanVal, NullVal, ObjectVal, FunctionValue, ArrayVal, MK_NULL, MK_BOOL, MK_NUMBER, MK_OBJECT, MK_STRING, MK_ARRAY } from '../values'
+import { RuntimeVal, StringVal, NumberVal, BooleanVal, NullVal, ObjectVal, FunctionValue, ArrayVal, MK_NULL, MK_BOOL, MK_NUMBER, MK_OBJECT, MK_STRING, MK_ARRAY, ClassValue, StaticClassValue, ClassFunctionValue, EnumValue, StaticEnumValue } from '../values'
 
 export function printValues(args: Array<RuntimeVal>) {
     for (let i = 0; i < args.length; i++) {
@@ -8,7 +8,7 @@ export function printValues(args: Array<RuntimeVal>) {
     }
 }
 
-export function runtimeToJS(arg: RuntimeVal) {
+export function runtimeToJS(arg: RuntimeVal): any {
     switch (arg.type) {
         case "string":
             return (arg as StringVal).value;
@@ -36,6 +36,22 @@ export function runtimeToJS(arg: RuntimeVal) {
         }
         case "native-fn": {
             return `[Native Function]`;
+        }
+        case 'class': {
+            return `[Class Instance: ${(arg as ClassValue).parent.name}]`;
+        }
+        case 'static-class': {
+            return `[Class: ${(arg as StaticClassValue).name}]`;
+        }
+        case 'class-function': {
+            return `[Class Method: ${(arg as ClassFunctionValue).name}]`;
+        }
+        case 'enum': {
+            const en = arg as EnumValue;
+            return `${en.parent.name}.${en.name}${en.tagged==null?'':'('+runtimeToJS(en.tagged)+')'}`
+        }
+        case 'static-enum': {
+            return `[Enum: ${(arg as StaticEnumValue).name}]`;
         }
         default:
             return arg;

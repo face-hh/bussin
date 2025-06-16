@@ -5,9 +5,11 @@ An esoteric programming language, in TypeScript for heaven's sake.
 # Running
 - To run a specific file: `npm run bussin <FILENAME>`
 - To run in repl mode (Bussin only): `npm run bussin`
+- To view the AST of a specific file: `npm run bussin view-ast <FILENAME>`
+- To transform a .bsx file to a .bs file (to make it more readable): `npm run bussin unbeautify <FILENAME>`
 
 # Bussin
-You can find an example at `/examples/main.bs`
+You can find an example at `/examples/main.bs`, amongst many others.
 
 # Bussin X 🚀
 We, at Bussin, believe everyone should be entertained while coding. Meet our alternative: **.bsx**.
@@ -15,12 +17,46 @@ We, at Bussin, believe everyone should be entertained while coding. Meet our alt
 Inside **Bussin X**, you *can* use BS syntax, however, it's recommended to use the **BSX** syntax described below. 
 
 ### New!
-- Updated fetch. `fetch("https://example.com/")(bruh(data) { waffle(data) })`
-- Bussin Object Notation 🗣️💯🔥. `bson.parse("[1, 2, 3]")`, `bson.stringify([1, 2, 3])`
-- Websockets. `lit ws be websocket("wss://thissiteis.fake/?EIO=4&transport=websocket") rn`, `ws.send("Bussin X")`
-- Math number stuff. `math.e`, `parseNumber("5")`
-- More string functions. `trim("  Hello  ")`, `splitstr("Hello,There", ",")`
-- Comments. `lit x be 5 + 10 rn /* this code is bussin */`
+- [Match expressions](#pattern-matching)
+- [Enums](#enums): `baller Foo {}`, `Foo.Bar`, `Foo.Bar(69)`
+- [Classes](#classes)
+- Throwing errors: `yeet "error"`
+- While loops: `diddy(nocap) {}`
+- Returning from functions: `ghost value`
+- Breaking from loops: `aura`
+- Continuing from loops: `gyatt`
+
+## Table of Contents
+**↑ Less advanced**\
+**↓ More advanced**
+
+- [Learn about commenting your code](#comments)
+- [Learn about exiting the program](#exit)
+- [Learn about Bussin X's basic data structures](#data-strucutres)
+    - [Learn about strings](#strings)
+    - [Learn about numbers](#numbers)
+    - [Learn about booleans](#booleans)
+    - [Learn about `null`](#null)
+    - [Learn about arrays](#arrays)
+    - [Learn about objects](#objects)
+- [Learn about variables](#variables)
+- [Learn about our math capabilities](#math)
+- [Learn about our time capabilities](#time)
+- [Learn about taking user input](#user-input)
+- [Learn about importing from other files](#importing)
+- [Learn about conditionals with `if`](#if-statements)
+- [Learn about the ternary operator](#ternary)
+- [Learn about loops](#loops)
+- [Learn about errors and how to avoid them safely](#try-catch)
+- [Learn about functions](#functions)
+- [Learn about enums](#enums)
+- [Learn about classes](#classes)
+- [Learn about pattern matching](#pattern-matching)
+- [Learn about BSON](#bson)
+- [Learn about fetching from domains](#fetch)
+- [Learn about regular expressions](#regex)
+- [Learn about websockets](#websockets)
+- [Learn about types](#types)
 
 ## Variables
 Mutable variables are created with:
@@ -123,6 +159,76 @@ multi line
 */
 ```
 
+## Classes
+Wait, what do you mean "class"? Here at Bussin X, we identify classes as chads.
+```rs
+chad Gigachad {
+    funny_powder_count rn
+    kai cenat is_the_greatest be nocap rn
+
+    skibidi toilet() {
+        drake.funny_powder_count be 0 rn
+    }
+
+    go_to_the_hood() {
+        drake.funny_powder_count be 999999999999999999 rn
+    }
+}
+```
+Static fields and methods are possible with the `kai cenat` keyword.\
+The constructor is called `skibidi toilet`, which is one of the greatest cinemas produced to this day.\
+In chad methods, you can reference the chad instance with `drake` instead of `this`.
+
+If you were ever thinking about instantiating a chad--I know, a rare occassion--there's a simple solution.\
+Just mog the chad.
+```rs
+mog Gigachad()
+```
+
+## Pattern Matching
+Similar to our try and catch syntax, you can match on something with the `fw` keyword.
+```rs
+lit value be "foo" rn
+fw value {
+    "foo" edges {
+        waffle("bar") rn
+    }
+    put the fries in the bag lil bro edges {
+        waffle(value) rn
+    }
+}
+```
+To match on the default case, use the `put the fries in the bag lil bro` keyword.
+
+## Enums
+We're balling.
+```rs
+baller Bussin {
+    Foo,
+    Bar,
+    Baz,
+    Ballin,
+}
+waffle(Bussin.Ballin) rn // Bussin.Ballin
+```
+We support tagged, enums, too!
+```rs
+waffle(Bussin.Ballin(3)) rn // Bussin.Ballin(3)
+fw Bussin.Ballin(3) {
+    Bussin.Ballin(n) edges {
+        waffle(n) rn // 3
+    }
+    put the fries in the bag lil bro edges {
+        waffle("fuck") rn // This (hopefully) won't print.
+    }
+}
+```
+Here at Bussin X, we believe in simplicity. So, you don't even need to declare enum members. It's optional.
+```rs
+baller Bussin {}
+waffle(Bussin.Ballin) rn // Bussin.Ballin
+```
+
 ## Functions
 Functions in programming are intricate entities that serve as modular units of code designed to perform specific tasks with a high degree of abstraction and reusability. These multifaceted constructs encapsulate a series of instructions, often comprising algorithmic operations and logical conditions, which execute a well-defined purpose within a larger program. Functionality is delineated through a meticulously crafted signature, encompassing parameters and return types, allowing for parameterization and value transmission between the calling code and the function body. The complexity further burgeons as functions may exhibit a plethora of characteristics, including but not limited to recursion, closures, and the ability to manipulate variables within their designated scopes. Their utility extends beyond mere procedural decomposition, often intertwining with the paradigms of object-oriented, functional, or imperative programming, depending on the programming language employed. The orchestration of functions, with their nuanced interplay, results in the orchestration of intricate software systems, promoting maintainability, readability, and the efficient allocation of computational resources. In essence, functions epitomize the sophisticated essence of programming, embodying the elegance and subtlety required to navigate the intricacies of algorithmic design and software engineering. You can create functions by using:
 ```rs
@@ -130,11 +236,17 @@ bruh perform(x, y) {
     x minus y
 }
 ```
-We, at Bussin X, think `return` statements are redundant. Instead, our superior functions return the last value emitted.
+Functions return the last value emitted.
 ```rs
 bruh perform(x, y) {
     x plus y // will do nothing
     x minus y
+}
+```
+You can optionally return values from them, too.
+```rs
+bruh nerd_adddition(x, y) {
+    ghost x plus y rn
 }
 ```
 You can also run the function after a specified timespan:
@@ -171,7 +283,25 @@ Loops in Bussin X are very easy:
 ```rs
 yall(lit i be 0 rn i smol 10 rn i plusplus){}
 ```
-Because we, at Bussin X, believe programmers should be responsible for their code, we did not add any `break` or `continue` keyword functionality to loops.
+You can `break` and `continue` from them normally, with our intuitive keywords:
+```
+yall(lit i be 0 rn i smol 10 rn i plusplus){
+    sus (i fr 9) {
+        aura
+    }
+    gyatt
+}
+```
+We have while loops, too.
+```rs
+lit n be 0 rn
+diddy(nocap) {
+    sus (n smol 10) {
+        aura
+    }
+    n beplus 1 rn
+}
+```
 
 ## Types
 Types in Bussin X are very important!
@@ -202,9 +332,9 @@ yall: number(lit: object i: number be 0: object rn i smol 10 rn i plusplus){
 ## Try Catch
 Bussin X also supports `try` `catch` statements:
 ```rs
-fuck_around {
+fuck around {
     waffle(null plus hogrider)
-} find_out {
+} find out {
     waffle(error)
 }
 ```
@@ -212,7 +342,21 @@ fuck_around {
 Cannot resolve 'hogrider' as it does not exist.
 ```
 
-**Note**: `find_out` doesn't return anything, "error" is a global variable.
+**Note**: `find out` doesn't return anything, "error" is a global variable.
+<br>
+<br>
+<br>
+To throw an error, use the `yeet` keyword.
+```rs
+fuck around {
+    yeet "Bussin X is better"
+} find out {
+    waffle(error)
+}
+```
+```
+Bussin X is better
+```
 
 ## Extra
 ### Math

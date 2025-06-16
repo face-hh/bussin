@@ -1,0 +1,20 @@
+baller Foo {}
+
+lit a be Foo.Bar rn
+
+fw a {
+    Foo.Bar edges {
+        waffle("foo") rn
+    }
+} rn
+
+lit b be Foo.Bar(2 plus 2) rn
+
+fw b {
+    Foo.Baz(contents) edges {
+        waffle(contents) rn
+    }
+    put the fries in the bag lil bro edges {
+        waffle("on ohio this shouldn't print") rn
+    }
+} rn

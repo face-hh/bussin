@@ -4,13 +4,15 @@
     "bussin": "npx ts-node src/main.ts"
   },
   "devDependencies": {
-    "@types/node": "^20.9.0",
+    "@types/json-schema": "^7.0.15",
+    "@types/node": "^20.19.0",
     "@types/user-agents": "^1.0.4",
     "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^7.3.1",
     "@typescript-eslint/parser": "^7.3.1",
     "eslint": "^8.57.0",
-    "typescript": "^5.2.2"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   },
   "dependencies": {
     "axios": "^1.6.8",

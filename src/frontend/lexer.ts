@@ -17,6 +17,17 @@ export enum TokenType {
     If,
     Else,
     For,
+    Class,
+    Static,
+    Return,
+    Break,
+    Continue,
+    While,
+    New,
+    Enum,
+    Match,
+    Default,
+    Throw,
 
     // Grouping * Operators
     BinaryOperator,
@@ -41,8 +52,9 @@ export enum TokenType {
     Ampersand, // &
     Bar, // |
     Ternary, // ->
+    Arrow, // =>
 
-    EOF, // Signified the end of file.
+    EOF, // Signifies the end of file, equivalent to \0.
     NewLine, // New line
 }
 
@@ -50,12 +62,23 @@ export enum TokenType {
  * Constant lookup for keywords and known identifiers + symbols.
  */
 const KEYWORDS: Record<string, TokenType> = {
-    let: TokenType.Let,
-    const: TokenType.Const,
-    fn: TokenType.Fn,
-    if: TokenType.If,
-    else: TokenType.Else,
-    for: TokenType.For,
+    "let": TokenType.Let,
+    "const": TokenType.Const,
+    "fn": TokenType.Fn,
+    "if": TokenType.If,
+    "else": TokenType.Else,
+    "for": TokenType.For,
+    "class": TokenType.Class,
+    "static": TokenType.Static,
+    "return": TokenType.Return,
+    "break": TokenType.Break,
+    "while": TokenType.While,
+    "continue": TokenType.Continue,
+    "new": TokenType.New,
+    "enum": TokenType.Enum,
+    "match": TokenType.Match,
+    "default": TokenType.Default,
+    "throw": TokenType.Throw,
 };
 
 /**
@@ -126,7 +149,7 @@ function isalpha(src: string, isFirstChar: boolean = false) {
  * Returns true if the character is whitespace like -> [\s, \t, \n]
  */
 function isskippable(str: string) {
-    return str == " " || str == "\n" || str == "\t" || str == '\r';
+    return str == " " || str == "\n" || str == "\t" || str == '\r' || str.charCodeAt(0)==8;
 }
 
 /**
@@ -194,6 +217,9 @@ export function tokenize(sourceCode: string): Token[] {
                     if (src[0] == '=') {
                         src.shift()
                         tokens.push(token('==', TokenType.EqualsCompare));
+                    } else if (src[0]=='>') {
+                        src.shift();
+                        tokens.push(token('=>', TokenType.Arrow));
                     } else {
                         tokens.push(token("=", TokenType.Equals));
                     }

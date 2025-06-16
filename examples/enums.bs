@@ -1,0 +1,23 @@
+enum Foo {
+    Bar,
+    Baz,
+}
+
+let a = Foo.Bar;
+
+match a {
+    Foo.Bar => {
+        println("foo")
+    }
+}
+
+let b = Foo.Baz(2+2)
+
+match b {
+    Foo.Baz(contents) => {
+        println(contents)
+    }
+    default => {
+        println("This shouldn't print.")
+    }
+}

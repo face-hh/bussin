@@ -52,17 +52,17 @@ waffle: object(xd: number)
 
 waffle(nerd.random(1,99), nerd.pi)
 
-fuck_around {
+fuck around {
     waffle(haha)
-} find_out {
+} find out {
     waffle(error)
 }
 
-fuck_around {
+fuck around {
     mf res be clapback("ls") rn
 
     waffle(res)
-} find_out {
+} find out {
     waffle(error, "Blud running on windows 💀")
 }
 

@@ -12,11 +12,21 @@ export type NodeType =
   | "IfStatement"
   | "ForStatement"
   | "TryCatchStatement"
+  | "ThrowStatement"
+  | "ClassDeclaration"
+  | "ClassField"
+  | "ReturnStatement"
+  | "WhileStatement"
+  | "BreakStatement"
+  | "ContinueStatement"
+  | "EnumDeclaration"
 
   // EXPRESSIONS
   | "AssignmentExpr"
   | "MemberExpr"
   | "CallExpr"
+  | "NewExpr"
+  | "MatchExpr"
 
   // LITERALS
   | "Property"
@@ -41,6 +51,45 @@ export interface Stmt {
 export interface Program extends Stmt {
   kind: "Program";
   body: Stmt[];
+}
+
+export interface ThrowStmt extends Stmt {
+  kind: "ThrowStatement";
+  value: Expr;
+}
+
+export interface EnumDeclarationStmt extends Stmt {
+  kind: "EnumDeclaration";
+  members: string[];
+  name: string;
+}
+
+export interface BreakStmt extends Stmt {
+  kind: "BreakStatement";
+}
+
+export interface ContinueStmt extends Stmt {
+  kind: "ContinueStatement";
+}
+
+export interface WhileStmt extends Stmt {
+  kind: "WhileStatement";
+  value: Expr;
+  body: Stmt[];
+}
+
+export interface ReturnStmt extends Stmt {
+  kind: "ReturnStatement";
+  value: Expr;
+}
+
+export interface ClassDeclarationStmt extends Stmt {
+  kind: "ClassDeclaration";
+  name: string;
+  fields: Set<string>;
+  staticFields: Map<string, Expr>;
+  funs: Map<string, FunctionDeclaration>;
+  staticFuns: Map<string, FunctionDeclaration>;
 }
 
 export interface VarDeclaration extends Stmt {
@@ -80,6 +129,32 @@ export interface ForStatement extends Stmt {
 
 /**  Expressions will result in a value at runtime unlike Statements */
 export interface Expr extends Stmt {}
+
+/**
+ * Instantiates a given class, calling its constructor if it has one.
+ * You can instantiate on a member expression ("foo.bar") or a regular identifier ("foo").
+ * Example: new Foo(1, 2, 3);
+ */
+export interface NewExpr extends Expr {
+  kind: "NewExpr";
+  target: Expr;
+  args: Array<Expr>;
+}
+
+
+/**
+ * Matches on the given value, similar to a switch statement.
+ * You can match on tagged enums with the Enum.Name(variable) syntax, same goes for normal enums.
+ * Multiple matches can be done with the comma operator.
+ * To choose the default case, use the default keyword.
+ * Example: match 3 { 1,2,3 => { true } default => { false } }
+ */
+export interface MatchExpr extends Expr {
+  kind: "MatchExpr";
+  cases: Map<Expr[], Stmt[]>;
+  defaultCase?: Stmt[];
+  value: Expr;
+}
 
 /**
  * A operation with two sides seperated by a operator.

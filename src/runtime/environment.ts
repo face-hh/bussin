@@ -10,12 +10,19 @@ import * as readline from 'readline/promises';
 
 import { Identifier, MemberExpr } from '../frontend/ast';
 import { runtimeToJS, printValues, jsToRuntime } from './eval/native-fns';
-import { ArrayVal, FunctionValue, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, MK_ARRAY, NumberVal, ObjectVal, RuntimeVal, StringVal } from "./values";
+import { ArrayVal, FunctionValue, MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, MK_OBJECT, MK_STRING, MK_ARRAY, NumberVal, ObjectVal, RuntimeVal, StringVal, StaticClassValue, ClassValue, StaticEnumValue, EnumValue } from "./values";
 import { eval_function } from './eval/expressions';
 import Parser from '../frontend/parser';
 import { evaluate } from './interpreter';
 import { transcribe } from '../utils/transcriber';
 import axios from 'axios';
+import { Runtime } from 'inspector/promises';
+
+
+export const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
 
 export function createGlobalEnv(beginTime: number = -1, filePath: string = __dirname, args: RuntimeVal[] = [], currency: string = "-"): Environment {
     const env = new Environment();
@@ -67,10 +74,6 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
         return MK_ARRAY(str.split(splitat).map(val => MK_STRING(val)));
     }), true);
 
-    const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-    });
     env.declareVar("input", MK_NATIVE_FN((args) => {
         const cmd = (args.shift() as StringVal).value;
 
@@ -88,6 +91,15 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
         });
     }), true);
 
+    env.declareVar("push", MK_NATIVE_FN((args) => {
+        (args[0] as ArrayVal).values.push(args[1]);
+        return MK_NULL();
+    }), true);
+
+    env.declareVar("pop", MK_NATIVE_FN((args) => {
+        return (args[0] as ArrayVal).values.pop();
+    }), true);
+
     env.declareVar("math", MK_OBJECT(
         new Map()
             .set("pi", MK_NUMBER(Math.PI))
@@ -95,6 +107,21 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
             .set("sqrt", MK_NATIVE_FN((args) => {
                 const arg = (args[0] as NumberVal).value;
                 return MK_NUMBER(Math.sqrt(arg));
+            }))
+            .set("bor", MK_NATIVE_FN((args) => {
+                return MK_NUMBER((args[0] as NumberVal).value | (args[1] as NumberVal).value);
+            }))
+            .set("band", MK_NATIVE_FN((args) => {
+                return MK_NUMBER((args[0] as NumberVal).value & (args[1] as NumberVal).value);
+            }))
+            .set("bxor", MK_NATIVE_FN((args) => {
+                return MK_NUMBER((args[0] as NumberVal).value ^ (args[1] as NumberVal).value);
+            }))
+            .set("blsh", MK_NATIVE_FN((args) => {
+                return MK_NUMBER((args[0] as NumberVal).value << (args[1] as NumberVal).value);
+            }))
+            .set("brsh", MK_NATIVE_FN((args) => {
+                return MK_NUMBER((args[0] as NumberVal).value >> (args[1] as NumberVal).value);
             }))
             .set("random", MK_NATIVE_FN((args) => {
                 const arg1 = (args[0] as NumberVal).value;
@@ -489,11 +516,20 @@ export function createGlobalEnv(beginTime: number = -1, filePath: string = __dir
     return env;
 }
 
+export enum ContinueType {
+    None=0,
+    Continue=1,
+    Break=2,
+}
+
 export default class Environment {
     private parent?: Environment;
     private variables: Map<string, RuntimeVal>
     private constants: Set<string>;
-
+    public exitWith: RuntimeVal|null = null; // if we return, we set an exit value
+    public canContinue: boolean = false;
+    public contin: ContinueType = ContinueType.None; // 0 = none, 1 = continue, 2 = break
+ 
     constructor(parentENV?: Environment) {
         //const global = parentENV ? true : false;
 
@@ -541,6 +577,9 @@ export default class Environment {
             pastVal = env.variables.get(varname);
         }
 
+        // Contributor (@artofcoding212) note: This is an incredibly weird way of implementing something like this and I don't understand what's going on here.
+        // I just sort of copied the object code and made it work for classes and static classes.
+
         switch(pastVal.type) {
             case "object": {
                 const currentProp = (expr.property as Identifier).symbol;
@@ -564,6 +603,26 @@ export default class Environment {
                 if(value) (pastVal as ArrayVal).values[num] = value;
 
                 return (pastVal as ArrayVal).values[num];
+            }
+            case "static-class": {
+                const currentProp = (expr.property as Identifier).symbol;
+                const prop = property ? property.symbol : currentProp;
+                if (value) (pastVal as StaticClassValue).staticFields.set(prop, value);
+                if (currentProp) pastVal = ((pastVal as StaticClassValue).staticFields.get(currentProp) ?? (pastVal as StaticClassValue).staticFuns.get(currentProp));
+                return pastVal;
+            }
+            case "class": {
+                const currentProp = (expr.property as Identifier).symbol;
+                const prop = property ? property.symbol : currentProp;
+                if (value) (pastVal as ClassValue).fields.set(prop, value);
+                if (currentProp) pastVal = ((pastVal as ClassValue).fields.get(currentProp) ?? (pastVal as ClassValue).funs.get(currentProp));
+                return pastVal;
+            }
+            case "static-enum": {
+                const currentProp = (expr.property as Identifier).symbol;
+                //const prop = property ? property.symbol : currentProp;
+                if (value || !currentProp) throw `Cannot assign to enum.`;
+                return { type: "enum", parent: {...pastVal}, tagged: null, name: currentProp } as EnumValue;
             }
             default:
                 throw "Cannot lookup or mutate type: " + pastVal.type;
